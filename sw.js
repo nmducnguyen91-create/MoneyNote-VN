@@ -1,5 +1,5 @@
 // MoneyNote VN — service worker: mở tức thì từ bộ nhớ máy, cập nhật ngầm
-const CACHE = 'moneynote-shell-v9';
+const CACHE = 'moneynote-shell-v22';
 const ASSETS = [
   './',
   'moneynote.html',
@@ -12,11 +12,18 @@ const ASSETS = [
   'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js'
 ];
 
+// Safari từ chối mọi phản hồi "đã chuyển hướng" mà service worker trả về → luôn bóc thành phản hồi sạch
+async function clean(res) {
+  if (!res || !res.redirected) return res;
+  const body = await res.blob();
+  return new Response(body, { status: res.status, statusText: res.statusText, headers: res.headers });
+}
+
 self.addEventListener('install', e => {
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c =>
     Promise.all(ASSETS.map(u =>
-      fetch(new Request(u, { cache: 'reload' })).then(r => { if (r.ok || r.type === 'opaque') return c.put(u, r); }).catch(() => {})
+      fetch(new Request(u, { cache: 'reload' })).then(clean).then(r => { if (r.ok || r.type === 'opaque') return c.put(u, r); }).catch(() => {})
     ))
   ));
 });
@@ -57,9 +64,9 @@ self.addEventListener('fetch', e => {
     const key = url.split('?')[0].split('#')[0];
     e.respondWith((async () => {
       const cache = await caches.open(CACHE);
-      const cached = (await cache.match(key)) || (key.endsWith('/') ? await cache.match('moneynote.html') : null);
+      const cached = await clean((await cache.match(key)) || (key.endsWith('/') ? await cache.match('moneynote.html') : null));
       const cachedCopy = cached ? cached.clone() : null;
-      const net = fetch(req, { cache: 'no-store' }).then(async res => {
+      const net = fetch(req, { cache: 'no-store' }).then(clean).then(async res => {
         if (!res || !res.ok) return res;
         const fresh = await res.clone().text();
         const old = cachedCopy ? await cachedCopy.text() : null;
@@ -70,7 +77,7 @@ self.addEventListener('fetch', e => {
       if (cached) { e.waitUntil(net.catch(() => {})); return cached; }
       try { return await net; }
       catch (_) {
-        return (await cache.match('moneynote.html')) ||
+        return (await clean(await cache.match('moneynote.html'))) ||
           new Response('<h1>Không có mạng</h1>', { headers: { 'Content-Type': 'text/html;charset=utf-8' } });
       }
     })());
@@ -79,7 +86,7 @@ self.addEventListener('fetch', e => {
 
   // Tài nguyên tĩnh (icon, splash, thư viện, Firebase SDK): ưu tiên bộ nhớ đệm
   e.respondWith(
-    caches.match(req).then(cached => cached || fetch(req).then(res => {
+    caches.match(req).then(clean).then(cached => cached || fetch(req).then(clean).then(res => {
       if (res && (res.ok || res.type === 'opaque')) {
         const copy = res.clone();
         caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});

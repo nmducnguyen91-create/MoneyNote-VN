@@ -19,7 +19,7 @@
   .dx-kbd{display:inline-block;background:var(--light);border:1px solid var(--bdr);border-radius:5px;padding:1px 6px;font-size:11px;font-weight:700;color:var(--muted)}
   #qa-panel{position:fixed;right:24px;bottom:24px;width:330px;z-index:1200;display:none;padding:16px;box-shadow:0 12px 40px rgba(16,40,64,.22)}
   #qa-panel.open{display:block}
-  #qa-panel input,#qa-panel select,#qa-panel textarea{width:100%;padding:10px 13px;border:1px solid var(--bdr);border-radius:10px;background:var(--light);font-size:14.5px;color:var(--text);box-sizing:border-box}
+  #qa-panel input,#qa-panel select,#qa-panel textarea{width:100%;padding:10px 13px;border:1px solid var(--bdr);border-radius:10px;background:var(--light);font-size:14px;color:var(--text);box-sizing:border-box}
   #tx-detail{position:fixed;right:24px;top:90px;width:310px;z-index:1150;display:none;padding:16px}
   #tx-detail.open{display:block}
   #csv-overlay{display:none;position:fixed;inset:0;background:rgba(10,20,32,.45);z-index:1300;align-items:center;justify-content:center}
@@ -42,7 +42,7 @@
   .cal-cell.today.wkend .cal-dn>span:first-child{color:#fff}
   .cal-cell .cal-n{font-size:11px;font-weight:600;color:var(--muted)}
   .cal-cell .cal-a{text-align:right;font-weight:700;line-height:1.35}
-  .cal-cell .cal-due{font-size:10.5px;background:var(--wbg,#fff8e1);color:var(--amber,#b26a00);border-radius:6px;padding:1px 6px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cal-cell .cal-due{font-size:11px;background:var(--wbg,#fff8e1);color:var(--amber,#b26a00);border-radius:6px;padding:1px 6px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .cal-empty{height:108px}
   .cal-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px 16px}
   .cal-sum>div{background:var(--light);border-radius:10px;padding:10px 12px;min-width:0}
@@ -127,7 +127,7 @@
     <input type="month" id="cal-month" class="dx-sel">
     <button class="dx-btn2" onclick="calShift(1)" title="Tháng sau">›</button>
     <button class="dx-btn2" onclick="calToday()">Hôm nay</button>
-    <span style="margin-left:auto;font-size:12.5px;color:var(--muted)">Màu nền đậm = chi nhiều · Bấm ngày để xem giao dịch</span>
+    <span style="margin-left:auto;font-size:12px;color:var(--muted)">Màu nền đậm = chi nhiều · Bấm ngày để xem giao dịch</span>
   </div>
   <div class="card"><div id="cal-grid-wrap"></div></div>
   <div class="card" id="cal-side"><div class="dx-h" id="cal-sum-title">Tổng tháng</div><div class="cal-sum" id="cal-sum"></div>
@@ -139,7 +139,7 @@
   qa.innerHTML=`
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
     <b style="font-size:14px" id="qa-title">Nhập nhanh</b>
-    <span style="font-size:11.5px;color:var(--muted)"><span class="dx-kbd">Enter</span> lưu · <span class="dx-kbd">Esc</span> đóng</span>
+    <span style="font-size:11px;color:var(--muted)"><span class="dx-kbd">Enter</span> lưu · <span class="dx-kbd">Esc</span> đóng</span>
   </div>
   <div style="display:grid;gap:9px">
     <div style="display:flex;gap:8px">
@@ -147,7 +147,7 @@
       <button class="dx-btn2" id="qa-in" style="flex:1" onclick="qaFlow('in')">Thu</button>
     </div>
     <input id="qa-amount" class="money-input" placeholder="Số tiền" inputmode="numeric" autocomplete="off">
-    <div id="qa-amount-display" style="font-size:11.5px;color:var(--muted);margin:-4px 2px 0;min-height:14px"></div>
+    <div id="qa-amount-display" style="font-size:11px;color:var(--muted);margin:-4px 2px 0;min-height:14px"></div>
     <input id="qa-desc" placeholder="Nội dung" autocomplete="off">
     <div style="display:flex;gap:8px">
       <select id="qa-group" style="flex:1" onchange="qaFillCats()"><option value="personal">Cá nhân</option></select>
@@ -169,14 +169,14 @@
   const ov=document.createElement('div');ov.id='csv-overlay';
   ov.innerHTML=`<div class="dx-card" style="width:640px;max-width:92vw;max-height:86vh;overflow:auto;padding:18px" onclick="event.stopPropagation()">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><b style="font-size:15px">Nhập giao dịch từ CSV</b><button class="dx-btn2" onclick="csvClose()">Đóng</button></div>
-    <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px;line-height:1.6">Dán nội dung CSV / sao kê (mỗi dòng: <b>Ngày, Nội dung, Số tiền</b> — số âm hoặc có dấu − là chi) hoặc chọn file. Hỗ trợ ngày dd/mm/yyyy và yyyy-mm-dd, phân cách phẩy / chấm phẩy / tab.</div>
-    <textarea id="csv-text" rows="6" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--bdr);border-radius:10px;background:var(--light);font-size:12.5px;font-family:monospace" placeholder="05/07/2026, Cà phê, -45000\n06/07/2026, Lương tháng 7, 25000000" oninput="csvPreview()"></textarea>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6">Dán nội dung CSV / sao kê (mỗi dòng: <b>Ngày, Nội dung, Số tiền</b> — số âm hoặc có dấu − là chi) hoặc chọn file. Hỗ trợ ngày dd/mm/yyyy và yyyy-mm-dd, phân cách phẩy / chấm phẩy / tab.</div>
+    <textarea id="csv-text" rows="6" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--bdr);border-radius:10px;background:var(--light);font-size:12px;font-family:monospace" placeholder="05/07/2026, Cà phê, -45000\n06/07/2026, Lương tháng 7, 25000000" oninput="csvPreview()"></textarea>
     <div style="display:flex;gap:10px;margin:10px 0;flex-wrap:wrap;align-items:center">
-      <input type="file" id="csv-file" accept=".csv,.txt" style="font-size:12.5px">
+      <input type="file" id="csv-file" accept=".csv,.txt" style="font-size:12px">
       <select id="csv-group" class="dx-sel"><option value="personal">Cá nhân</option></select>
       <select id="csv-acct" class="dx-sel"></select>
     </div>
-    <div id="csv-prev" style="font-size:12.5px"></div>
+    <div id="csv-prev" style="font-size:12px"></div>
     <button class="dx-btn" id="csv-commit" style="margin-top:10px;display:none" onclick="csvCommit()"></button>
   </div>`;
   ov.onclick=()=>csvClose();
@@ -271,7 +271,7 @@
       <span>Tổng thu <b style="color:var(--green)">${fmtK(tin)} đ</b></span>
       <span>Tổng chi <b style="color:var(--red)">${fmtK(tout)} đ</b></span>
       <span>Chênh lệch <b style="color:${tin-tout>=0?'var(--green)':'var(--red)'}">${tin-tout<0?'−':''}${fmtK(Math.abs(tin-tout))} đ</b></span>
-      <span style="margin-left:auto;color:var(--muted);font-size:11.5px">Bấm dòng: chi tiết · Bấm đúp ô: sửa nhanh</span></div>`;
+      <span style="margin-left:auto;color:var(--muted);font-size:11px">Bấm dòng: chi tiết · Bấm đúp ô: sửa nhanh</span></div>`;
     const arrow=c=>sort.col===c?(sort.dir>0?' ↑':' ↓'):'';
     const th=(c,label,align)=>`<th onclick="ttSetSort('${c}')" style="text-align:${align||'left'}">${label}${arrow(c)}</th>`;
     const flowCell=t=>t.flow==='in'?'<span style="color:var(--green);font-weight:700">Thu</span>':t.flow==='out'?'<span style="color:var(--red);font-weight:700">Chi</span>':'<span style="color:var(--muted);font-weight:700">CK</span>';
@@ -282,7 +282,7 @@
       ${th('date','Ngày')}${th('desc','Nội dung')}${th('category','Danh mục')}${th('group','Nhóm')}${th('acct','Tài khoản')}<th>Loại</th>${th('amount','Số tiền','right')}
       </tr></thead><tbody>${rows.map(t=>`<tr data-id="${t.id}" onclick="txDetOpen('${t.id}')">
       <td style="white-space:nowrap">${dt(t.date)}</td>
-      <td ondblclick="ttEdit(event,'${t.id}','desc')">${esc(t.desc||t.category)}${t.note?`<div style="font-size:11.5px;color:var(--muted)">${esc(t.note)}</div>`:''}</td>
+      <td ondblclick="ttEdit(event,'${t.id}','desc')">${esc(t.desc||t.category)}${t.note?`<div style="font-size:11px;color:var(--muted)">${esc(t.note)}</div>`:''}</td>
       <td>${esc(t.category)}</td><td>${GROUPS[t.group]||esc(t.group)}</td>
       <td>${accCell(t)}</td><td>${flowCell(t)}</td>
       <td style="text-align:right;white-space:nowrap" ondblclick="ttEdit(event,'${t.id}','amount')">${amtCell(t)}</td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">Không có giao dịch phù hợp</td></tr>'}</tbody>`;
@@ -305,9 +305,9 @@
     const t=db.transactions.find(x=>String(x.id)===String(id));if(!t)return;selTxId=t.id;
     det.innerHTML=`
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><b style="font-size:14px">Chi tiết giao dịch</b><button class="dx-btn2" onclick="txDetClose()" style="padding:4px 10px">✕</button></div>
-      <div style="font-size:19px;font-weight:800;color:${t.flow==='in'?'var(--green)':t.flow==='out'?'var(--red)':'var(--muted)'};margin-bottom:8px">${t.flow==='in'?'+':t.flow==='out'?'−':''}${fmt(+t.amount||0)}</div>
-      <div style="font-size:13.5px;font-weight:700;margin-bottom:10px">${esc(t.desc||t.category)}</div>
-      <div style="font-size:12.5px;line-height:2;color:var(--muted)">
+      <div style="font-size:20px;font-weight:800;color:${t.flow==='in'?'var(--green)':t.flow==='out'?'var(--red)':'var(--muted)'};margin-bottom:8px">${t.flow==='in'?'+':t.flow==='out'?'−':''}${fmt(+t.amount||0)}</div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">${esc(t.desc||t.category)}</div>
+      <div style="font-size:12px;line-height:2;color:var(--muted)">
         <div style="display:flex;justify-content:space-between"><span>Ngày</span><b style="color:var(--text)">${dt(t.date)}</b></div>
         <div style="display:flex;justify-content:space-between"><span>Danh mục</span><b style="color:var(--text)">${esc(t.category)}</b></div>
         <div style="display:flex;justify-content:space-between"><span>Nhóm</span><b style="color:var(--text)">${GROUPS[t.group]||esc(t.group)}</b></div>
@@ -415,8 +415,8 @@
     document.getElementById('rep-flow').innerHTML=`
       <div style="display:grid;grid-template-columns:56px minmax(0,1fr);gap:0 8px">
         <div></div>
-        <div style="display:flex;height:20px;${LY.rate?'':'visibility:hidden'}">${data.map(x=>{const r=x.tin&&!x.fut?Math.round((x.tin-x.tout)/x.tin*100):null;return `<div style="flex:1;text-align:center;font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums;color:${r===null?'transparent':r<0?'var(--red)':r>=20?'var(--green)':'var(--muted)'}">${r===null?'·':r+'%'}</div>`}).join('')}</div>
-        <div style="position:relative;height:${H}px">${ticks.map(t=>`<div style="position:absolute;right:0;top:${Y(t)-8}px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap">${lbl(t)}</div>`).join('')}</div>
+        <div style="display:flex;height:20px;${LY.rate?'':'visibility:hidden'}">${data.map(x=>{const r=x.tin&&!x.fut?Math.round((x.tin-x.tout)/x.tin*100):null;return `<div style="flex:1;text-align:center;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;color:${r===null?'transparent':r<0?'var(--red)':r>=20?'var(--green)':'var(--muted)'}">${r===null?'·':r+'%'}</div>`}).join('')}</div>
+        <div style="position:relative;height:${H}px">${ticks.map(t=>`<div style="position:absolute;right:0;top:${Y(t)-8}px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap">${lbl(t)}</div>`).join('')}</div>
         <div style="position:relative;height:${H}px">
           ${ticks.map(t=>`<div style="position:absolute;left:0;right:0;top:${Y(t)}px;border-top:1px ${Math.abs(t)<1?'solid var(--muted)':'dashed var(--bdr)'}"></div>`).join('')}
           <div style="position:absolute;left:0;right:0;top:0;height:${zY}px;display:flex;align-items:flex-end">${data.map(x=>`
@@ -428,7 +428,7 @@
         <div></div>
         <div style="display:flex;margin-top:6px">${data.map(x=>{const over=bud&&LY.bud&&x.tout>bud;return `<div style="flex:1;text-align:center;font-size:12px;color:${x.m===repMonth?'var(--navy)':over?'var(--red)':'var(--muted)'};font-weight:${x.m===repMonth||over?800:400}">T${+x.m.split('-')[1]}${over?' ▲':''}</div>`}).join('')}</div>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:12.5px;color:var(--muted);margin-top:12px;align-items:center">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted);margin-top:12px;align-items:center">
         <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 6px"><span style="width:10px;height:10px;background:var(--green);border-radius:3px"></span>Thu</span>
         <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 6px"><span style="width:10px;height:10px;background:var(--red);border-radius:3px"></span>Chi</span>
         ${chip('net','Dòng tiền ròng','<span style="width:14px;height:0;border-top:2.5px solid var(--navy)"></span>')}
@@ -445,19 +445,19 @@
     const delta=(a,b)=>b?Math.round((a-b)/b*100):null;
     const dRow=(label,a,b,goodUp)=>{const dl=delta(a,b);
       return`<div style="display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px dashed var(--bdr)">
-        <span style="font-size:14.5px;color:var(--muted)">${label}</span>
+        <span style="font-size:14px;color:var(--muted)">${label}</span>
         <span style="text-align:right"><b style="font-size:16px">${fmtK(a)} đ</b>
-        ${dl!=null?`<span style="font-size:11.5px;font-weight:700;margin-left:7px;color:${(dl>=0)===goodUp?'var(--green)':'var(--red)'}">${dl>=0?'+':''}${dl}%</span>`:''}</span></div>`};
+        ${dl!=null?`<span style="font-size:11px;font-weight:700;margin-left:7px;color:${(dl>=0)===goodUp?'var(--green)':'var(--red)'}">${dl>=0?'+':''}${dl}%</span>`:''}</span></div>`};
     document.getElementById('rep-compare').innerHTML=
-      `<div style="font-size:11.5px;color:var(--muted);margin-bottom:5px">${monthLabel(repMonth)} so với ${monthLabel(pm)}</div>`+
+      `<div style="font-size:11px;color:var(--muted);margin-bottom:5px">${monthLabel(repMonth)} so với ${monthLabel(pm)}</div>`+
       dRow('Tổng thu',cur.tin,prev.tin,true)+dRow('Tổng chi',cur.tout,prev.tout,false)+
-      `<div style="display:flex;justify-content:space-between;padding:11px 0"><b style="font-size:14.5px">Tích luỹ</b><b style="font-size:16px;color:${cur.tin-cur.tout>=0?'var(--green)':'var(--red)'}">${cur.tin-cur.tout<0?'−':''}${fmtK(Math.abs(cur.tin-cur.tout))} đ</b></div>`;
+      `<div style="display:flex;justify-content:space-between;padding:11px 0"><b style="font-size:14px">Tích luỹ</b><b style="font-size:16px;color:${cur.tin-cur.tout>=0?'var(--green)':'var(--red)'}">${cur.tin-cur.tout<0?'−':''}${fmtK(Math.abs(cur.tin-cur.tout))} đ</b></div>`;
     // Theo nhóm
     document.getElementById('rep-groups').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">${Object.entries(GROUPS).map(([k,label])=>{
       const s=sumMonth(repMonth,k);return`<div style="background:var(--light);border-radius:12px;padding:11px 12px">
-        <div style="font-size:13.5px;font-weight:700;margin-bottom:6px">${label}</div>
-        <div style="font-size:13.5px;color:var(--green)">+${fmtK(s.tin)}</div>
-        <div style="font-size:13.5px;color:var(--red)">−${fmtK(s.tout)}</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:6px">${label}</div>
+        <div style="font-size:13px;color:var(--green)">+${fmtK(s.tin)}</div>
+        <div style="font-size:13px;color:var(--red)">−${fmtK(s.tout)}</div>
         <div style="font-size:15px;font-weight:800;margin-top:5px;color:${s.tin-s.tout>=0?'var(--green)':'var(--red)'}">${s.tin-s.tout<0?'−':''}${fmtK(Math.abs(s.tin-s.tout))} đ</div></div>`}).join('')}</div>`;
     // Cơ cấu chi
     const byCat={};(db.transactions||[]).forEach(t=>{if(t.flow!=='out')return;if((t.date||'').slice(0,7)!==repMonth)return;if(repGroup&&t.group!==repGroup)return;byCat[t.category||'Khác']=(byCat[t.category||'Khác']||0)+(+t.amount||0)});
@@ -470,7 +470,7 @@
     const top=(db.transactions||[]).filter(t=>t.flow==='out'&&(t.date||'').slice(0,7)===repMonth&&(!repGroup||t.group===repGroup)).sort((a,b)=>b.amount-a.amount).slice(0,10);
     document.getElementById('rep-top').innerHTML=top.length?top.map((t,i)=>`
       <div style="display:flex;gap:10px;align-items:baseline;padding:8px 0;border-bottom:1px dashed var(--bdr);font-size:14px">
-        <span style="color:var(--muted);width:20px">${i+1}.</span><span style="flex:1;min-width:0">${esc(t.desc||t.note||t.category||"Không tên")}<span style="display:block;color:var(--muted);font-size:12.5px;margin-top:2px">${t.desc&&t.category?esc(t.category)+" · ":""}${dt(t.date)}</span></span>
+        <span style="color:var(--muted);width:20px">${i+1}.</span><span style="flex:1;min-width:0">${esc(t.desc||t.note||t.category||"Không tên")}<span style="display:block;color:var(--muted);font-size:12px;margin-top:2px">${t.desc&&t.category?esc(t.category)+" · ":""}${dt(t.date)}</span></span>
         <b style="color:var(--red)">${fmtK(t.amount)} đ</b></div>`).join('')
       :'<div style="color:var(--muted);font-size:13px">Không có dữ liệu</div>';
   };
@@ -502,7 +502,7 @@
     const prevY=months.map(m=>(repYear-1)+m.slice(4));
     const ptin=prevY.reduce((s,m)=>s+sumMonth(m,repGroup).tin,0),ptout=prevY.reduce((s,m)=>s+sumMonth(m,repGroup).tout,0);
     const dl=(a,b)=>b?Math.round((a-b)/b*100):null;
-    const tile=(label,val,color,sub)=>`<div style="background:var(--light);border-radius:12px;padding:15px 17px"><div style="font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px">${label}</div><div style="font-size:21px;font-weight:800;color:${color};margin-top:5px">${val}</div>${sub?`<div style="font-size:12.5px;color:var(--muted);margin-top:3px">${sub}</div>`:''}</div>`;
+    const tile=(label,val,color,sub)=>`<div style="background:var(--light);border-radius:12px;padding:15px 17px"><div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px">${label}</div><div style="font-size:24px;font-weight:800;color:${color};margin-top:5px">${val}</div>${sub?`<div style="font-size:12px;color:var(--muted);margin-top:3px">${sub}</div>`:''}</div>`;
     document.getElementById('rep-year-sum').innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
       ${tile('Tổng thu',fmtK(tin)+' đ','var(--green)',dl(tin,ptin)!=null?(dl(tin,ptin)>=0?'+':'')+dl(tin,ptin)+'% so với '+(repYear-1):'')}
       ${tile('Tổng chi',fmtK(tout)+' đ','var(--red)',dl(tout,ptout)!=null?(dl(tout,ptout)>=0?'+':'')+dl(tout,ptout)+'% so với '+(repYear-1):'')}
@@ -568,7 +568,7 @@
     const gridLines=[0,.25,.5,.75,1].map(f=>{const v=lo+(hi-lo)*f;return`<line x1="${P}" y1="${Y(v)}" x2="${W-14}" y2="${Y(v)}" stroke="var(--bdr)" stroke-dasharray="3 4"/><text x="${P-6}" y="${Y(v)+4}" text-anchor="end" font-size="12" fill="var(--muted)">${fmtK(v)}</text>`}).join('');
     const dLabels=pts.filter((p,i)=>i%Math.ceil(days/8)===0).map(p=>{const i=pts.indexOf(p);return`<text x="${X(i)}" y="${H-10}" text-anchor="middle" font-size="12" fill="var(--muted)">${p.d.getDate()}/${p.d.getMonth()+1}</text>`}).join('');
     document.getElementById('fc-chart').innerHTML=`
-      <div style="display:flex;gap:26px;flex-wrap:wrap;font-size:14.5px;margin-bottom:12px">
+      <div style="display:flex;gap:26px;flex-wrap:wrap;font-size:14px;margin-bottom:12px">
         <span>Hiện tại <b>${fmtK(bal)} đ</b></span>
         <span>Thấp nhất <b style="color:${minB<0?'var(--red)':'var(--amber,#e67e22)'}">${minB<0?'−':''}${fmtK(Math.abs(minB))} đ</b>${minD?` <span style="color:var(--muted)">(${dt(minD)})</span>`:''}</span>
         <span>Cuối kỳ <b style="color:${pts[pts.length-1].b>=0?'var(--green)':'var(--red)'}">${pts[pts.length-1].b<0?'−':''}${fmtK(Math.abs(pts[pts.length-1].b))} đ</b></span>
@@ -672,14 +672,14 @@
     [onclick]{cursor:pointer}
     html body:not(#_dx) .stat-tile>*{flex:0 0 auto!important;width:auto!important;height:auto!important;min-height:0!important}
     html body:not(#_dx) .stat-tile .stat-label{font-size:13px!important;line-height:1.35!important;color:var(--muted)}
-    html body:not(#_dx) .stat-tile .stat-val{font-size:19px!important;line-height:1.3!important;margin:4px 0 0!important}
+    html body:not(#_dx) .stat-tile .stat-val{font-size:20px!important;line-height:1.3!important;margin:4px 0 0!important}
     html body:not(#_dx) .stat-tile .stat-val+.cmp-row{margin-top:auto!important;padding-top:8px;border-top:1px solid var(--line,var(--bdr))}
     html body:not(#_dx) #month-overview .stat-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-auto-rows:1fr}
     html body:not(#_dx) #month-overview .stat-tile{padding:12px 14px!important;min-height:0!important}
     html body:not(#_dx) #month-overview>div>div[style*="line-height:1.7"]{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;background:none!important;padding:0!important;line-height:1.35!important}
     html body:not(#_dx) #month-overview>div>div[style*="line-height:1.7"]>div{flex-direction:row!important;justify-content:space-between!important;align-items:center!important;gap:10px;background:var(--light);border-radius:12px;padding:12px 14px;min-width:0}
     html body:not(#_dx) #month-overview>div>div[style*="line-height:1.7"]>div>span{font-size:13px}
-    html body:not(#_dx) #month-overview>div>div[style*="line-height:1.7"]>div>b{font-size:19px;line-height:1.3;text-align:right;white-space:nowrap}
+    html body:not(#_dx) #month-overview>div>div[style*="line-height:1.7"]>div>b{font-size:20px;line-height:1.3;text-align:right;white-space:nowrap}
     html body:not(#_dx) #month-overview>div>div[style*="line-height:1.7"]>div{padding:12px 14px!important}
     html body:not(#_dx) #month-overview>div:has(>div[style*="line-height:1.7"]){padding-bottom:14px!important}
     .screen.dx-dash,.screen.dx-dash.active{column-count:auto!important;columns:auto!important}
@@ -694,7 +694,7 @@
     html body:not(#_dx) .stat-tile{position:relative;display:flex!important;flex-direction:column!important;flex-wrap:nowrap!important;align-items:stretch!important;justify-content:flex-start!important;background:var(--light)!important;border-radius:12px!important;padding:12px 14px!important;min-width:0}
     html body:not(#_dx) .stat-tile+.stat-tile::before{display:none!important}
     html body:not(#_dx) .stat-tile .stat-label{white-space:normal}
-    html body:not(#_dx) .stat-tile .stat-val{margin-left:0!important;margin-top:4px;font-size:19px}
+    html body:not(#_dx) .stat-tile .stat-val{margin-left:0!important;margin-top:4px;font-size:20px}
     html body:not(#_dx) .stat-tile .cmp-row{justify-content:space-between!important;align-items:baseline!important;flex-wrap:wrap!important;gap:2px 8px!important;font-size:12px!important;line-height:1.45!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;margin-top:5px!important}
     html body:not(#_dx) .stat-tile .cmp-row>*{white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;height:auto!important;line-height:1.45!important;max-width:none!important}
     html body:not(#_dx) .stat-tile .cmp-lb{flex:1 1 auto;min-width:0}
@@ -703,7 +703,7 @@
     html body.dx-mini:not(#_dx) .bottom-nav{width:72px!important;padding:18px 10px!important;overflow-x:hidden!important}
     html body.dx-mini:not(#_dx) .bottom-nav::before{content:'FT';text-align:center;padding:8px 0 18px}
     html body.dx-mini:not(#_dx) .nav-btn{position:relative!important;font-size:0!important;justify-content:center!important;padding:12px 0!important;gap:0!important}
-    html body.dx-mini:not(#_dx) .nav-badge{position:absolute!important;top:4px;right:4px;font-size:10px!important;margin:0!important}
+    html body.dx-mini:not(#_dx) .nav-badge{position:absolute!important;top:4px;right:4px;font-size:11px!important;margin:0!important}
     body.dx-mini .modal-overlay{padding-left:72px}
     html body:not(#_dx) #dx-mini-btn{position:absolute!important;top:20px;right:12px;width:34px!important;height:34px!important;min-height:34px!important;padding:0!important;gap:0!important;justify-content:center!important;font-size:0!important;border-radius:9px!important;color:var(--muted);opacity:.85}
     html body:not(#_dx) #dx-mini-btn:hover{opacity:1;background:var(--light)!important;color:var(--text)}
