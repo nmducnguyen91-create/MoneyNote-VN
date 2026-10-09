@@ -3116,7 +3116,7 @@ function drawAnnualChart(){
 }
 
 // ── TÀI SẢN RÒNG / SỨC KHỎE / THÁNG NÀY / CẢNH BÁO ──
-function ftDebtToXfer(){let n=0;(db.transactions||[]).forEach(t=>{if(t.category!=='Trả nợ'||(t.flow!=='out'&&t.flow!=='in')||t.group==='company')return;const acc=t.account||'cash';if(t.flow==='out'){t.from=acc;t.to=''}else{t.to=acc;t.from=''}t.ext=t.ext||String(t.desc||'').replace(/^(Trả nợ|Thu nợ|Tất toán( trả góp)?) · /,'')||'Bên ngoài';t.flow='xfer';t.debtPay=1;n++});return n}
+function ftDebtToXfer(){let n=0;(db.transactions||[]).forEach(t=>{if(t&&t.group==='personal'&&(t.flow==='in'||t.flow==='out')&&t.category!=='Trả nợ'&&/^\s*(thu|trả|tra)\s*n[ợo]\b/i.test(t.desc||''))t.category='Trả nợ';if(t.category!=='Trả nợ'||(t.flow!=='out'&&t.flow!=='in')||t.group==='company')return;const acc=t.account||'cash';if(t.flow==='out'){t.from=acc;t.to=''}else{t.to=acc;t.from=''}t.ext=t.ext||String(t.desc||'').replace(/^(Trả nợ|Thu nợ|Tất toán( trả góp)?) · /,'')||'Bên ngoài';t.flow='xfer';t.debtPay=1;n++});return n}
 function liquidCash(){ensureAccounts();const open=db.accounts.reduce((s,a)=>s+(a.opening||0),0);return open+db.transactions.reduce((s,t)=>s+(t.flow==='in'?t.amount:t.flow==='out'?-t.amount:(t.flow==='xfer'&&t.from&&!t.to)?-t.amount:(t.flow==='xfer'&&t.to&&!t.from)?t.amount:0),0)}
 function investValue(){return (db.assets||[]).reduce((s,a)=>s+a.qty*a.cur,0)}
 function investCost(){return (db.assets||[]).reduce((s,a)=>s+a.qty*a.avg,0)}
@@ -4314,7 +4314,7 @@ function txRow(t,opts){
   if(t.flow==='xfer'){
     const fa=acctById(t.from),ta=acctById(t.to);
     const dh=opts.hideDate?'':`<div class="tx-date">${dateLabel(t.date)}</div>`;
-    return`<div class="tx-item" data-txid="${t.id}" data-swipe-edit="openEditTx('${t.id}')" data-swipe-del="deleteTxById('${t.id}')" onclick="openEditTx('${t.id}')" style="cursor:pointer"><div class="tx-icon" style="background:var(--light);color:var(--navy);font-size:16px;font-weight:700">⇄</div><div class="tx-meta"><div class="tx-name">${t.desc||'Chuyển khoản'}</div><div class="tx-sub">${fa?fa.name:(t.ext||'Bên ngoài')} → ${ta?ta.name:(t.ext||'Bên ngoài')}${t.debtPay?' · trả/thu nợ, không tính chi':''}${t.note?' · '+t.note:''}</div></div><div class="tx-right"><div class="tx-amt" style="color:var(--navy)">${fmtK(t.amount)} đ</div>${dh}</div></div>`;
+    return`<div class="tx-item" data-txid="${t.id}" data-swipe-edit="openEditTx('${t.id}')" data-swipe-del="deleteTxById('${t.id}')" onclick="openEditTx('${t.id}')" style="cursor:pointer"><div class="tx-icon" style="background:var(--light);color:var(--navy);font-size:16px;font-weight:700">⇄</div><div class="tx-meta"><div class="tx-name">${t.desc||'Chuyển khoản'}</div><div class="tx-sub">${t.debtPay?(ta&&!fa?'Thu nợ → '+ta.name:fa&&!ta?'Trả nợ ← '+fa.name:(fa?fa.name:'Bên ngoài')+' → '+(ta?ta.name:'Bên ngoài')):(fa?fa.name:(t.ext||'Bên ngoài'))+' → '+(ta?ta.name:(t.ext||'Bên ngoài'))}${t.note?' · '+t.note:''}</div></div><div class="tx-right"><div class="tx-amt" style="color:${t.debtPay&&ta&&!fa?'var(--green)':t.debtPay&&fa&&!ta?'var(--red)':'var(--navy)'}">${t.debtPay&&ta&&!fa?'+':t.debtPay&&fa&&!ta?'−':''}${fmtK(t.amount)} đ</div>${dh}</div></div>`;
   }
   const isIn=t.flow==='in';const icon=CAT_ICONS[t.category]||I.clip;
   const bg=isIn?'#e8f5e9':'#fdecea';const sign=isIn?'+':'−';
