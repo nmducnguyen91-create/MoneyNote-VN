@@ -8495,7 +8495,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     '.modal{overscroll-behavior:contain;will-change:transform;-webkit-overflow-scrolling:touch}'+
     '.modal-overlay .modal{max-height:calc(100dvh - max(env(safe-area-inset-top,0px),12px) - 10px)!important}'+
     '.modal-overlay .modal .modal-title{position:sticky;top:-10px;z-index:3;background:var(--card);padding-top:6px;margin-top:-6px}'+
-    '#add-modal .modal{padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))!important}';
+    '#add-modal .modal{padding-bottom:calc(30px + env(safe-area-inset-bottom,0px))!important}';
   document.head.appendChild(st);
   var Z=9001,stack=[],skip=0;
   function isWin(n){if(!n||n.nodeType!==1)return false;var c=n.classList;if(c.contains('modal-overlay')||c.contains('img-viewer'))return true;
@@ -8673,5 +8673,17 @@ setTimeout(()=>{try{mnHome();renderBudget();renderAlerts()}catch(e){}},300);
 (function(){function dock(){const nav=document.querySelector('.bottom-nav'),f=document.getElementById('fab-btn');if(!nav||!f)return;const b=nav.querySelectorAll('.nav-btn');if(b.length>=2&&f.parentNode!==nav)nav.insertBefore(f,b[2]||null)}
 dock();document.addEventListener('DOMContentLoaded',dock);
 let t;window.addEventListener('scroll',()=>{document.body.classList.add('mn-scrolling');clearTimeout(t);t=setTimeout(()=>document.body.classList.remove('mn-scrolling'),700)},{passive:true});})();</script>
+<style id="mn-safe-fix">
+/* Dòng "Thu chi · Tháng …" đầu trang: rõ, không bị lẫn vào vùng tai thỏ */
+#topbar{padding-top:calc(env(safe-area-inset-top,0px) + 14px)!important}
+#top-caption{position:relative;z-index:2;color:#4e5a70!important;opacity:1!important;font-weight:600!important;font-size:15px!important;margin:4px 0 2px!important;max-height:none!important}
+body.dark #top-caption{color:#a9b6c9!important}
+.topbar.tb-compact #top-caption{opacity:1!important;max-height:none!important;margin:2px 0 0!important}
+/* Cửa sổ nhập/sửa: nút cuối cách xa vạch home, dễ bấm */
+html body .modal-overlay .modal,html body #add-modal .modal,html body #rec-modal .modal,html body #debt-modal .modal{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 30px)!important}
+html body .modal-overlay .modal .btn-row{margin-top:18px!important;gap:10px!important}
+html body .modal-overlay .modal .btn-row .btn{min-height:52px!important;border-radius:14px!important}
+html body #qa-chat .modal{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 30px)!important}
+</style>
 </body>
 </html>
