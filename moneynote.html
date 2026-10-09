@@ -1456,7 +1456,7 @@ body.navA .fab.nav-hide-fab,body.navB .fab.nav-hide-fab,body.navC .fab.nav-hide-
 .nav-btn > *:not(.nav-badge){position:relative;z-index:1}
 /* màu riêng cho từng tab khi đang chọn */
 #nav-home.active,body.dark #nav-home.active{color:#0a84ff!important}
-#nav-personal.active,body.dark #nav-personal.active{color:#00b25c!important}
+#nav-personal.active,body.dark #nav-personal.active{color:#0a8a47!important}
 #nav-crypto.active,body.dark #nav-crypto.active{color:#af52de!important}
 #nav-service.active,body.dark #nav-service.active{color:#ff9500!important}
 #nav-company.active,body.dark #nav-company.active{color:#0e9bb5!important}
@@ -1531,7 +1531,7 @@ html{overflow-x:clip}
   .modal{padding-left:18px!important;padding-right:18px!important;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 18px)!important;max-height:calc(100dvh - env(safe-area-inset-top,0px) - 12px)!important}
   .form-input{font-size:16px!important;min-height:48px}
   .btn{min-height:50px;font-size:16px!important}
-  #acct-report>div{margin-left:14px;margin-right:14px}
+  #acct-report{padding-left:14px!important;padding-right:14px!important}
 }
 </style>
 <style id="mn-kpi-strip">
@@ -1543,6 +1543,19 @@ html{overflow-x:clip}
 #kpi-strip .kpi-val{font-size:24px!important;font-weight:800!important;letter-spacing:-.6px!important;line-height:1.1!important;margin:8px 0 4px!important;font-variant-numeric:tabular-nums;white-space:nowrap!important;overflow:hidden;text-overflow:ellipsis}
 #kpi-strip .kpi-val span{font-size:15px!important;margin-left:1px}
 #kpi-strip .kpi-sub{font-size:13px!important;color:var(--muted)!important;line-height:1.35!important;white-space:normal!important;overflow:hidden!important;display:-webkit-box!important;-webkit-box-orient:vertical!important;-webkit-line-clamp:2!important;min-height:2.7em}
+</style>
+<style id="mn-contrast">
+/* Độ tương phản ≥ 4.5:1 cho chữ thường, ≥ 3:1 cho số lớn */
+html body:not(.dark),html body:not(.dark) *{--muted:#5c667c!important;--red:#d92d20!important;--green:#0a8a47!important}
+html body:not(.dark) #kpi-strip .kpi-val[style*="--green"],html body:not(.dark) .kpi-val[style*="var(--green)"]{color:#0a8a47!important}
+html body:not(.dark) .kpi-val[style*="#e67e22"]{color:#c0610c!important}
+html body:not(.dark) .ts-dot+span,html body:not(.dark) .topbar-stat .ts-label{color:#5c667c!important}
+body.dark{--muted:#a9b8cc!important}
+html body.dark .sec-head-action,html body.dark [onclick].sec-head-action{color:#6cb6ff!important}
+html body.dark [style*="color:var(--navy)"],html body.dark .tx-icon[style*="--navy"]{color:#a8c8ec!important}
+html body.dark .tab-bar .tab-item:not(.active),html body.dark .seg button:not(.on),html body.dark .seg-btn:not(.active){color:#b4c2d4!important}
+html body.dark .clps-chev{opacity:.8!important;color:#b4c2d4!important}
+html body.dark .tx-icon{color:#cdd8e6}
 </style>
 </head>
 <body>
@@ -8676,8 +8689,11 @@ let t;window.addEventListener('scroll',()=>{document.body.classList.add('mn-scro
 <style id="mn-safe-fix">
 /* Dòng "Thu chi · Tháng …" đầu trang: rõ, không bị lẫn vào vùng tai thỏ */
 #topbar{padding-top:calc(env(safe-area-inset-top,0px) + 14px)!important}
-#top-caption{position:relative;z-index:2;color:#4e5a70!important;opacity:1!important;font-weight:600!important;font-size:15px!important;margin:4px 0 2px!important;max-height:none!important}
-body.dark #top-caption{color:#a9b6c9!important}
+html body #top-caption,html body.tbB #top-caption,html body.tbC #top-caption{position:relative;z-index:2;color:#4e5a70!important;opacity:1!important;font-weight:600!important;font-size:15px!important;margin:4px 0 2px!important;max-height:none!important}
+html body.dark #top-caption{color:#a9b6c9!important}
+html body #top-greeting,html body.tbB .topbar-greeting,html body.tbC .topbar-greeting{color:#4e5a70!important;opacity:1!important;font-weight:600!important;font-size:15px!important;position:relative;z-index:2}
+html body.dark #top-greeting,html body.dark.tbB .topbar-greeting{color:#a9b6c9!important}
+.topbar.tb-compact #top-greeting{opacity:1!important;max-height:none!important}
 .topbar.tb-compact #top-caption{opacity:1!important;max-height:none!important;margin:2px 0 0!important}
 /* Cửa sổ nhập/sửa: nút cuối cách xa vạch home, dễ bấm */
 html body .modal-overlay .modal,html body #add-modal .modal,html body #rec-modal .modal,html body #debt-modal .modal{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 30px)!important}

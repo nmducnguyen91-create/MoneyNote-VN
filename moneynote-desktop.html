@@ -1585,6 +1585,12 @@ html body:not(#_dx) .stat-tile .stat-val{white-space:nowrap;overflow:hidden;text
 html{overflow-x:clip}
 @media(max-width:700px){.kpi-strip{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 </style>
+<style id="mn-contrast">
+html body:not(.dark),html body:not(.dark) *{--muted:#5c667c!important;--red:#d92d20!important;--green:#0a8a47!important}
+body.dark{--muted:#a9b8cc!important}
+html body.dark .sec-head-action{color:#6cb6ff!important}
+html body.dark [style*="color:var(--navy)"]{color:#a8c8ec!important}
+</style>
 </head>
 <body>
 <div id="boot-splash"><div class="bs-mark" style="background:none;box-shadow:0 12px 30px -8px rgba(28,74,119,.35);overflow:hidden"><svg viewBox="0 0 96 96" width="64" height="64" aria-hidden="true"><defs><linearGradient id="bsg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a5480"></stop><stop offset="1" stop-color="#102840"></stop></linearGradient></defs><rect width="96" height="96" rx="22" fill="url(#bsg)"></rect><rect x="27" y="20" width="44" height="56" rx="7" fill="#f5f8fc"></rect><rect x="27" y="20" width="9" height="56" rx="4" fill="#c9d6e6"></rect><text x="54" y="60" text-anchor="middle" font-family="-apple-system,'Segoe UI',sans-serif" font-size="30" font-weight="800" fill="#1a3c5e">₫</text></svg></div><div class="bs-name">MoneyNote</div><div class="bs-spin"></div></div>
