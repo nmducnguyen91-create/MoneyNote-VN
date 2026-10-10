@@ -4373,7 +4373,9 @@ function openCalc(targetId){
   const seed=calcTarget?getMoneyVal(calcTarget):0;
   calcExpr=seed?String(seed):'';
   document.getElementById('calc-use-btn').style.display=calcTarget?'':'none';
-  document.getElementById('calc-overlay').style.display='';
+  const co=document.getElementById('calc-overlay');
+  let mz=1300;document.querySelectorAll('body>*').forEach(n=>{const z=+getComputedStyle(n).zIndex||0;if(z>mz&&z<99990&&n!==co&&getComputedStyle(n).display!=='none')mz=z});
+  co.style.zIndex=String(mz+1);co.style.display='';
   calcRender();
 }
 function closeCalc(){document.getElementById('calc-overlay').style.display='none'}

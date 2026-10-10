@@ -1,5 +1,5 @@
 // MoneyNote VN — service worker: mở tức thì từ bộ nhớ máy, cập nhật ngầm
-const CACHE = 'moneynote-shell-v30';
+const CACHE = 'moneynote-shell-v31';
 const ASSETS = [
   './',
   'moneynote.html',
