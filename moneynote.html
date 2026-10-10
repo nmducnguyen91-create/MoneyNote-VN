@@ -2903,7 +2903,7 @@ function renderTopbar(){
   let cfg;
   const CG='#00b25c',CR='var(--red)',CB='#0066cc',CO='#b06a12';
   if(curTab==='personal'){
-    cfg={greet:'Thu chi · Tháng '+my,cap:'Tiết kiệm cá nhân tháng '+my+' (thu − chi)',big:fmt(income-pChi),
+    cfg={greet:'Tháng '+my,cap:'Tiết kiệm cá nhân tháng '+my+' (thu − chi)',big:fmt(income-pChi),
       cf:[['Thu',k(income),CG,income],['Chi',k(pChi),CR,pChi]]};
   }else if(curTab==='crypto'){
     const pf=computePortfolio();
@@ -5439,7 +5439,7 @@ function renderAcctReport(){
       extra+=`<div style="margin-top:8px;background:var(--light);border-radius:10px;padding:9px 12px">
         <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:15px;font-weight:700">Phải trả kỳ này <span style="font-weight:500;color:var(--muted);font-size:13px">(sao kê chốt ${_s.closeStr.slice(8,10)}/${_s.closeStr.slice(5,7)})</span></span><b style="font-size:15px;color:${pay?'var(--red)':'var(--green,var(--green))'}">${pay?formatMoney(pay)+' đ':(_s.paidSince?'Đã trả đủ':'0 đ')}</b></div>
         <div style="font-size:13px;color:var(--muted);margin-top:4px;line-height:1.7">
-          ${stmtParts(_x).map(r=>`<div style="display:flex;justify-content:space-between"><span>${r[0]}</span><b>${formatMoney(r[1])} đ</b></div>`).join('')}
+          ${stmtParts(_x).map(r=>`<div style="display:flex;justify-content:space-between"><span>${r[0]}</span><b>${fmtK(r[1])} đ</b></div>`).join('')}
           ${due?`<div style="display:flex;justify-content:space-between"><span>Hạn thanh toán</span><b>${String(due.getDate()).padStart(2,'0')}/${String(due.getMonth()+1).padStart(2,'0')}</b></div>`:''}
         </div>
       </div>`;
@@ -7987,6 +7987,16 @@ function audit(){
   if(miss.length)secs.push('<b>Định kỳ chưa ghi · '+miss.length+'</b><br>'+miss.slice(0,5).map(r=>esc(r.desc||r.category)+' '+fmtK(r.amount)+btn('Ghi ngay',"qaFill('"+String((r.desc||r.category||'')+' '+Math.round(r.amount/1000)+'k').replace(/['"\\]/g,'')+"')")).join('<br>'));
   const lech=accts().filter(a=>a.type==='credit').map(a=>{let o=0;try{o=stmtSplit(a).other}catch(e){}return {a,o}}).filter(x=>x.o>0);
   if(lech.length)secs.push('<b>Lệch sao kê · '+lech.length+'</b><br>'+lech.map(x=>esc(x.a.name)+': sao kê cao hơn giao dịch đã ghi '+fmtK(x.o)+btn('Xem thẻ',"qaAuditGo('personal','account')")).join('<br>'));
+  /* ── Đối chiếu chéo: tính lại độc lập, so với số app đang hiện ── */
+  try{const all=(db.transactions||[]).concat((typeof ftHid!=='undefined'&&ftHid&&ftHid.txs)||[]);const ok=[],bad=[];const chk=(l,a,b)=>{(Math.abs((+a||0)-(+b||0))<1?ok:bad).push(l+(Math.abs((+a||0)-(+b||0))<1?'':': app '+fmtK(a)+' · tính lại '+fmtK(b)))};
+    accts().filter(a=>a.type!=='credit').forEach(a=>{let b=+a.opening||0;all.forEach(t=>{const v=+t.amount||0;if(t.flow==='xfer'){if(t.from===a.id)b-=v;if(t.to===a.id)b+=v}else if(t.group!=='company'&&(t.account||'cash')===a.id)b+=t.flow==='in'?v:-v});chk('Số dư '+esc(a.name),acctBalance(a),b)});
+    chk('Tổng tiền khả dụng',cashNow(),accts().filter(a=>a.type!=='credit').reduce((s,a)=>s+acctBalance(a),0));
+    accts().filter(a=>a.type==='credit').forEach(a=>{const C=cardDebtInfo(a);chk('Nợ '+esc(a.name)+' = chi tiêu + trả góp + nợ liên kết',C.total,C.revolving+C.instRem+C.linked);if(a.limit)chk('Khả dụng '+esc(a.name),C.avail,Math.max(0,a.limit-C.total))});
+    chk('Tổng nợ thẻ',cardsDebtTotal(),accts().filter(a=>a.type==='credit').reduce((s,a)=>s+cardDebtInfo(a).total,0));
+    const T=db.transactions||[],ids=new Set(),ac=new Set(accts().map(a=>a.id));let dup=0,badv=0,orph=0;T.forEach(t=>{if(ids.has(t.id))dup++;ids.add(t.id);if(!isFinite(+t.amount)||+t.amount<0||!/^\d{4}-\d{2}-\d{2}/.test(t.date||'')||!['in','out','xfer'].includes(t.flow))badv++;if((t.account&&!ac.has(t.account))||(t.flow==='xfer'&&((t.from&&!ac.has(t.from))||(t.to&&!ac.has(t.to)))))orph++});
+    (dup?bad:ok).push('Mã giao dịch không trùng'+(dup?': '+dup+' mã trùng':''));(badv?bad:ok).push('Số tiền · ngày · loại hợp lệ'+(badv?': '+badv+' khoản lỗi':''));(orph?bad:ok).push('Giao dịch gắn đúng tài khoản'+(orph?': '+orph+' khoản gắn tài khoản đã xoá':''));
+    secs.push('<b>Đối chiếu số liệu · '+ok.length+'/'+(ok.length+bad.length)+' khớp</b>'+(bad.length?'<br>'+bad.map(x=>'✗ '+x).join('<br>'):' ✓'));
+  }catch(e){secs.push('<b>Đối chiếu số liệu</b>: không chạy được ('+esc(e.message)+')')}
   return secs.length?'<b>Soát sổ</b> · 60 ngày gần nhất<br><br>'+secs.join('<br><br>'):'<b>Soát sổ</b>: không thấy vấn đề nào ✓';
 }
 function payoffPlan(extra){extra=+extra||0;
@@ -8690,7 +8700,7 @@ dock();document.addEventListener('DOMContentLoaded',dock);
 let t;window.addEventListener('scroll',()=>{document.body.classList.add('mn-scrolling');clearTimeout(t);t=setTimeout(()=>document.body.classList.remove('mn-scrolling'),700)},{passive:true});})();</script>
 <style id="mn-safe-fix">
 /* Dòng "Thu chi · Tháng …" đầu trang: rõ, không bị lẫn vào vùng tai thỏ */
-html body #topbar,html body #topbar.tb-compact{padding-top:calc(max(env(safe-area-inset-top,0px),24px) + 30px)!important}
+html body #topbar,html body #topbar.tb-compact{padding-top:calc(max(env(safe-area-inset-top,0px),24px) + 20px)!important}
 /* Thanh chọn (segmented) trên điện thoại: không bóp, không mất chữ — thiếu chỗ thì vuốt ngang */
 @media (max-width:480px){
 html body .tab-bar,html body .seg,html body .chip-row,html body .type-toggle,html body #annual-seg,html body .asset-class-row{overflow-x:auto!important;overflow-y:hidden!important;flex-wrap:nowrap!important;padding:2px!important;gap:2px!important;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;max-width:calc(100% - 24px)}
