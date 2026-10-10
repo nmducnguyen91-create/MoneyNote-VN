@@ -7312,6 +7312,7 @@ async function aiCall(p,messages,system,max){
   return String(pick(j)||'').trim();
 }
 async function claude(messages,system,max){const p=aiActive();if(!p)throw new Error('Trợ lý AI đang tắt. Bật trong Cài đặt → Dữ liệu → Trợ lý AI.');return aiCall(p,messages,system,max)}
+try{window.mnAI=claude}catch(e){}
 function md(s){return esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^\s*[-*•]\s+/gm,'• ').replace(/\n/g,'<br>')}
 function thinking(txt){const id='qa-think-'+Date.now();log('<div class="qa-bot qa-think" id="'+id+'">'+txt+'</div>');return ()=>{const e=$(id);if(e)e.remove()}}
 function aiBase(){
@@ -8306,5 +8307,84 @@ setTimeout(()=>{try{mnHome();renderBudget();renderAlerts()}catch(e){}},300);
 ['openEditAsset','renderHealth','renderForecast','renderCashProj','renderFinPlan','renderCrypto','switchCryptoTab','renderCryptoPortfolio','renderCompany','renderServiceTab','renderServiceStats','renderCompanyStats','renderJobList','renderServiceList','switchCompanyTab','switchServiceTab','openJobForm','openJobDetail','openSvcForm','openServiceDetail','openProjectManager','renderProjectChips','function','saveService','closeSvcForm','deleteCurrentService','editCurrentService','closeSvcDetail','handleSvcImages','deleteSvcTx','addSvcTransaction','editSvcTx','cancelSvcTxEdit','resetSvcTxForm','setSvcTxType','renderSvcImages','renderSvcDetailTx','openSvcDetail','filterServiceSel','filterService','saveJob','closeJobForm','deleteCurrentJob','editCurrentJob','closeJobDetail','deleteJobTx','addJobTransaction','editJobTx','cancelJobTxEdit','resetJobTxForm','setJobTxType','extendJobDeadline','updateJobDeadline','setJobStatus','setJobProgress','previewJobProgress','renderJobDetailTx','filterJobSel','filterJob','deleteProject','renameProject','renderProjectManageList','renderProjectQuick','saveNewProject','closeProjectManager','addProjectPrompt','filterProject','filterCompanySel','filterCompany','renderCryptoSummary','renderCryptoHistory','deleteCurrentAsset','openEditAsset','renderInvestPortfolio','renderInvestSummary','filterInvestSel','filterInvest','jobQuickDone','deleteJobById','svcQuickDone','deleteServiceById'].forEach(function(n){window[n]=function(){}});</script>
 <script>/* đổi danh mục cũ "Thu nhập online" → "Thu nhập tăng ca" */(function(){const O='Thu nhập online',N='Thu nhập tăng ca';function m(){try{if(typeof db==='undefined'||!db)return false;let c=0;(db.transactions||[]).forEach(t=>{if(t.category===O){t.category=N;c++}});(db.recurring||[]).forEach(t=>{if(t.category===O){t.category=N;c++}});(db.budgets||[]).forEach(t=>{if(t.category===O){t.category=N;c++}});return c>0}catch(e){return false}}
 const r=window.renderAll;if(typeof r==='function'){window.renderAll=function(){if(m()&&typeof save==='function'){try{save()}catch(e){}}return r.apply(this,arguments)}}})();</script>
+<style id="mn-xfer-hide">#add-modal.mn-xfer #f-cat-wrap,#add-modal.mn-xfer #acct-row,#add-modal.mn-xfer .form-group:has(> #f-desc){display:none!important}#add-modal.mn-xfer #cat-date-grid{grid-template-columns:1fr!important}</style>
+<script>/* Chuyển khoản: ẩn Mô tả · Danh mục · Tài khoản (không dùng) */(function(){const f=window.setTxType;if(typeof f!=='function')return;window.setTxType=function(t){const r=f.apply(this,arguments);try{const m=document.getElementById('add-modal');if(m)m.classList.toggle('mn-xfer',t==='xfer')}catch(e){}return r}})();</script>
+<style id="mn-usage-style">#mnu-card b{font-weight:600}</style>
+<script>/* ═══ Nhật ký sử dụng: thói quen · nhu cầu · lỗi (chỉ lưu trên máy) ═══ */(function(){
+const K='mn-usage-log',V=1,DEV=/moneynote-desktop/.test(location.pathname)?'desktop':'điện thoại';
+const ld=()=>{try{const o=JSON.parse(localStorage.getItem(K)||'null');if(o&&o.v===V)return o}catch(e){}return {v:V,on:true,since:Date.now(),opens:0,hours:Array(24).fill(0),days:Array(7).fill(0),scr:{},act:{},forms:{},saves:{},slow:0,need:[],err:{},sess:0}};
+let L=ld(),dirty=false,t0=Date.now();
+const sv=()=>{dirty=false;try{localStorage.setItem(K,JSON.stringify(L))}catch(e){}};
+setInterval(()=>{if(dirty)sv()},4000);addEventListener('pagehide',()=>{L.sess+=Math.round((Date.now()-t0)/1000);t0=Date.now();sv()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){L.sess+=Math.round((Date.now()-t0)/1000);sv()}else t0=Date.now()});
+const inc=(o,k,n)=>{if(!L.on||!k)return;o[k]=(o[k]||0)+(n||1);dirty=true};
+const clean=s=>String(s||'').replace(/\s+/g,' ').replace(/[\d.,]+\s*(k|tr|triệu|nghìn|đ|vnd)?/gi,'#').trim().slice(0,40);
+if(L.on){L.opens++;const d=new Date();L.hours[d.getHours()]++;L.days[d.getDay()]++;dirty=true}
+const wrap=(n,fn)=>{const f=window[n];if(typeof f!=='function'||f.__mnu)return;const w=function(){try{fn.apply(this,arguments)}catch(e){}return f.apply(this,arguments)};w.__mnu=1;window[n]=w};
+const TAB={home:'Tổng quan',personal:'Thu chi',settings:'Cài đặt'};const SUB={main:'Thu chi',account:'Tài khoản',stats:'Thống kê',debt:'Nợ',trip:'Chuyến đi',budget:'Ngân sách',goal:'Mục tiêu'};const ALL=['Tổng quan','Thu chi','Tài khoản','Thống kê','Cài đặt'];let inSub=0;
+setTimeout(()=>{
+ wrap('showTab',t=>{if(!inSub)inc(L.scr,TAB[t]||t)});
+ wrap('switchSettingsTab',(b,t)=>{inc(L.scr,'Cài đặt › '+((b&&b.textContent.trim())||t));if(t==='export')setTimeout(render,50)});
+ (function(){const f=window.ftNavSub;if(typeof f!=='function'||f.__mnu)return;const w=function(s){try{inc(L.scr,SUB[s]||s)}catch(e){}inSub++;try{return f.apply(this,arguments)}finally{inSub--}};w.__mnu=1;window.ftNavSub=w})();
+ let fo=0;wrap('openAddModal',g=>{fo=Date.now();inc(L.forms,'Mở form nhập')});
+ wrap('openEditTx',()=>inc(L.forms,'Sửa giao dịch'));
+ wrap('openCalc',()=>inc(L.act,'Máy tính'));
+ wrap('openSearch',()=>inc(L.act,'Tìm kiếm'));
+ wrap('saveTransaction',()=>{inc(L.saves,(window.txType||document.querySelector('#add-modal .type-btn.active')?.textContent.trim()||'Lưu'));if(fo&&Date.now()-fo>90000){L.slow++;dirty=true}fo=0});
+ wrap('qaSend',()=>{const i=document.getElementById('qa-input');const q=i&&i.value.trim();if(!q)return;inc(L.act,'Nhập nhanh');const box=document.getElementById('qa-chat');const n0=box?box.children.length:0;
+  setTimeout(()=>{if(!box)return;const bots=[...box.querySelectorAll('.qa-bot')].slice(-2).map(e=>e.innerText).join(' ');if(/chưa hiểu|không hiểu|chưa trả lời được|không tìm thấy|chưa rõ|thử ghi lại/i.test(bots)){L.need.unshift({q:clean(q),t:Date.now()});L.need=L.need.slice(0,40);dirty=true}},1500)});
+},800);
+document.addEventListener('click',e=>{if(!L.on)return;const b=e.target.closest('button,[onclick],.set-row,.chip,.tab-item');if(!b||b.closest('#mnu-card'))return;const t=clean(b.getAttribute('aria-label')||b.title||b.innerText);if(t&&t.length>1&&t!=='#')inc(L.act,t)},true);
+const er=(m,src)=>{if(!L.on)return;m=String(m||'').slice(0,140);if(!m||/ResizeObserver|Script error/.test(m))return;const k=m;const o=L.err[k]||(L.err[k]={n:0,first:Date.now(),src:src||''});o.n++;o.last=Date.now();o.dev=DEV;const ks=Object.keys(L.err);if(ks.length>40){ks.sort((a,b)=>L.err[a].last-L.err[b].last);delete L.err[ks[0]]}dirty=true};
+addEventListener('error',e=>er(e.message,(e.filename||'').split('/').pop()+':'+(e.lineno||'')));
+addEventListener('unhandledrejection',e=>er('Promise: '+((e.reason&&e.reason.message)||e.reason)));
+const oce=console.error;console.error=function(){try{er([...arguments].map(x=>x&&x.message||String(x)).join(' '),'console')}catch(e){}return oce.apply(console,arguments)};
+const top=(o,n)=>Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,n);
+const dname=['CN','T2','T3','T4','T5','T6','T7'];
+function report(){const days=Math.max(1,Math.round((Date.now()-L.since)/864e5));const hr=L.hours.map((v,i)=>[i,v]).sort((a,b)=>b[1]-a[1]).filter(x=>x[1]).slice(0,3).map(x=>x[0]+'h').join(', ');const dy=L.days.map((v,i)=>[dname[i],v]).sort((a,b)=>b[1]-a[1]).filter(x=>x[1]).slice(0,2).map(x=>x[0]).join(', ');
+ const used=new Set(Object.keys(L.scr));const never=ALL.concat(['Cài đặt › Ngân sách','Cài đặt › Mục tiêu','Cài đặt › Định kỳ','Cài đặt › Tài khoản','Cài đặt › Dữ liệu']).filter(x=>!used.has(x));
+ const errs=Object.entries(L.err).sort((a,b)=>b[1].n-a[1].n);const sv2=Object.values(L.saves).reduce((s,v)=>s+v,0),fo=L.forms['Mở form nhập']||0;
+ return {days,hr,dy,never,errs,sv2,fo,txt:['BÁO CÁO SỬ DỤNG MONEYNOTE ('+DEV+')','Thời gian: '+days+' ngày · mở app '+L.opens+' lần · tổng ~'+Math.round(L.sess/60)+' phút','Giờ dùng nhiều: '+(hr||'—')+' · ngày: '+(dy||'—'),'Màn hình hay vào: '+top(L.scr,8).map(x=>x[0]+' '+x[1]).join(' · '),'Chưa từng vào: '+(never.join(', ')||'—'),'Thao tác nhiều nhất: '+top(L.act,12).map(x=>x[0]+' '+x[1]).join(' · '),'Form nhập: mở '+fo+' · lưu '+sv2+(fo?' ('+Math.round(sv2/fo*100)+'%)':'')+' · nhập lâu >90s: '+L.slow+' lần','Loại đã lưu: '+top(L.saves,5).map(x=>x[0]+' '+x[1]).join(' · '),'Nhập nhanh chưa hiểu ('+L.need.length+'): '+(L.need.slice(0,15).map(x=>'"'+x.q+'"').join(' · ')||'—'),'Lỗi phát sinh ('+errs.length+' loại): '+(errs.slice(0,12).map(([m,o])=>'['+o.n+'x '+new Date(o.last).toLocaleDateString('vi-VN')+' '+o.src+'] '+m).join(' | ')||'không có')].join('\n')}}
+const E=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function row(k,v){return '<div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--bdr,#e3e8ef);font-size:14px"><span style="color:var(--muted);flex-shrink:0">'+k+'</span><span style="text-align:right;min-width:0;text-wrap:pretty">'+v+'</span></div>'}
+const btn='flex:1;min-width:0;height:44px;border-radius:10px;border:1px solid var(--bdr,#dfe5ee);background:var(--card,#fff);color:var(--text);font-size:14px;font-weight:600;cursor:pointer';
+function render(){const c=document.getElementById('mnu-card');if(!c)return;const r=report();const BD='1px solid var(--bdr,#e3e8ef)';
+ const tile=(v,l,col)=>'<div style="background:var(--light,#f3f5f8);border-radius:12px;padding:10px 8px;text-align:center;min-width:0"><div style="font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1'+(col?';color:'+col:'')+'">'+v+'</div><div style="font-size:12px;color:var(--muted);margin-top:3px">'+l+'</div></div>';
+ const chips=(a,muted)=>a.length?'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">'+a.map(x=>'<span style="font-size:13px;padding:4px 10px;border-radius:999px;background:'+(muted?'transparent;border:1px dashed var(--bdr,#cfd6e0);color:var(--muted)':'var(--light,#f3f5f8)')+'">'+E(x)+'</span>').join('')+'</div>':'<div style="font-size:13px;color:var(--muted);margin-top:4px">Chưa có dữ liệu</div>';
+ const blk=(t,inner)=>'<div style="padding:12px 0;border-top:'+BD+'"><div style="font-size:13px;color:var(--muted);font-weight:600">'+t+'</div>'+inner+'</div>';
+ const rate=r.fo?Math.round(r.sv2/r.fo*100):0;
+ let html='<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:12px"><div style="min-width:0"><div style="font-size:14px;font-weight:600">Ghi lại thói quen & lỗi</div><div style="font-size:13px;color:var(--muted);margin-top:2px">Chỉ trên máy này · không ghi số tiền</div></div><button type="button" onclick="mnuToggle()" aria-label="Bật tắt nhật ký" style="flex-shrink:0;width:52px;height:32px;border-radius:16px;border:none;cursor:pointer;position:relative;background:'+(L.on?'var(--green,#00b25c)':'var(--bdr,#cfd6e0)')+'"><span style="position:absolute;top:3px;'+(L.on?'right:3px':'left:3px')+';width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2)"></span></button></div>';
+ if(!L.on){c.innerHTML=html+'<div style="font-size:13px;color:var(--muted);padding:0 0 14px">Đang tắt · không ghi thêm gì.</div>';return}
+ html+='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding-bottom:12px">'+tile(r.days,'ngày')+tile(L.opens,'lần mở')+tile(r.errs.length,'lỗi',r.errs.length?'var(--red)':'var(--green,#00b25c)')+'</div>';
+ html+=blk('Hay dùng lúc','<div style="font-size:14px;margin-top:4px">'+E((r.hr||'—')+(r.dy?' · '+r.dy:''))+'</div>');
+ html+=blk('Hay vào',chips(top(L.scr,4).map(x=>x[0])));
+ if(r.never.length)html+=blk('Chưa dùng tới',chips(r.never.slice(0,6),1));
+ html+=blk('Nhập liệu','<div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;margin-top:4px"><span>Form: '+(r.fo?r.sv2+'/'+r.fo+' lần lưu':'—')+'</span><span style="color:var(--muted)">'+(r.fo?rate+'%':'')+'</span></div>'+(r.fo?'<div style="height:6px;border-radius:3px;background:var(--light,#eef1f5);margin-top:6px;overflow:hidden"><div style="height:100%;width:'+Math.min(100,rate)+'%;background:var(--green,#00b25c)"></div></div>':'')+'<div style="font-size:13px;color:var(--muted);margin-top:6px">'+(L.slow?L.slow+' lần nhập lâu >90s · ':'')+L.need.length+' câu nhập nhanh chưa hiểu</div>');
+ if(r.errs.length)html+=blk('Lỗi gần đây',r.errs.slice(0,3).map(([m,o])=>'<div style="display:flex;gap:8px;font-size:13px;margin-top:6px"><span style="flex-shrink:0;color:var(--red);font-weight:600;font-variant-numeric:tabular-nums">'+o.n+'×</span><span style="min-width:0;overflow-wrap:anywhere;color:var(--text)">'+E(m.slice(0,90))+'</span></div>').join(''));
+ html+='<div id="mnu-ai" style="font-size:14px;line-height:1.55"></div>';
+ html+='<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;padding:12px 0 8px;border-top:'+BD+'"><button type="button" onclick="mnuAI()" style="'+btn+';background:var(--navy,#1a2b4a);color:#fff;border:none">AI gợi ý</button><button type="button" onclick="mnuCopy()" style="'+btn+'">Sao chép báo cáo</button></div>';
+ html+='<div style="text-align:center;padding:4px 0 14px"><button type="button" onclick="mnuClear()" style="border:none;background:none;font-size:13px;color:var(--muted);cursor:pointer;padding:8px">Xoá nhật ký</button></div>';
+ c.innerHTML=html}
+window.mnuToggle=()=>{L.on=!L.on;sv();render()};
+window.mnuClear=()=>{if(!confirm('Xoá toàn bộ nhật ký sử dụng?'))return;const on=L.on;localStorage.removeItem(K);L=ld();L.on=on;sv();render()};
+window.mnuCopy=async()=>{const t=report().txt;try{await navigator.clipboard.writeText(t);alert('Đã sao chép. Dán vào khung chat thiết kế để được phân tích & sửa.')}catch(e){prompt('Sao chép nội dung dưới đây:',t)}};
+window.mnuAI=async()=>{const box=document.getElementById('mnu-ai');if(!box)return;if(typeof window.mnAI!=='function'){box.innerHTML='<div style="padding:10px 0;color:var(--muted)">Cần bật Trợ lý AI ở mục phía trên.</div>';return}
+ box.innerHTML='<div style="padding:10px 0;color:var(--muted)">AI đang đọc nhật ký…</div>';
+ try{const s=await window.mnAI([{role:'user',content:report().txt}],'Bạn là chuyên gia UX của app quản lý thu chi cá nhân MoneyNote (tiếng Việt). Dựa trên nhật ký sử dụng, đưa ra tối đa 6 gợi ý cụ thể, xếp theo mức ưu tiên, chia 3 nhóm: **Thói quen** (cách dùng app hiệu quả hơn), **Nhu cầu** (tính năng nên thêm/đưa lên dễ thấy, dựa vào câu nhập chưa hiểu & màn hình chưa dùng), **Lỗi** (lỗi nào cần sửa trước, nguyên nhân khả dĩ). Mỗi gợi ý 1 dòng, bắt đầu bằng "- ". Không bịa số liệu.',700);
+  box.innerHTML='<div style="padding:10px 0;border-top:1px solid var(--bdr,#e3e8ef)">'+E(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^\s*[-*•]\s+/gm,'• ').replace(/\n/g,'<br>')+'</div>'}catch(e){box.innerHTML='<div style="padding:10px 0;color:var(--red)">'+E(e.message)+'</div>'}};
+function mount(){const ex=document.getElementById('settings-export');if(!ex||document.getElementById('mnu-card'))return;const heads=[...ex.querySelectorAll('.sec-head')];const ref=heads.find(h=>/Sao lưu/.test(h.textContent))||null;
+ const h=document.createElement('div');h.className='sec-head';h.innerHTML='<span class="sec-head-title">Nhật ký sử dụng</span>';const c=document.createElement('div');c.className='card';c.id='mnu-card';c.style.padding='14px 16px 0';ex.insertBefore(h,ref);ex.insertBefore(c,ref);render()}
+setTimeout(mount,900);
+window.mnuReport=()=>report().txt;
+})();</script>
+<script>/* Gom quản lý Tài khoản từ Cài đặt vào tab Tài khoản */(function(){function go(){const pa=document.getElementById('personal-account'),sa=document.getElementById('settings-account');if(!pa||!sa||pa.dataset.mg)return;pa.dataset.mg=1;
+ const h=pa.querySelector('.sec-head .sec-head-action');if(h){h.textContent='+ Thêm';h.setAttribute('onclick','openAcctForm()')}
+ const rep=document.getElementById('acct-report');const wrap=document.createElement('div');while(sa.firstChild)wrap.appendChild(sa.firstChild);
+ const fh=wrap.querySelector('.sec-head');if(fh){const t=fh.querySelector('.sec-head-title');if(t)t.textContent='Quản lý tài khoản';fh.querySelector('.sec-head-action')?.remove()}
+ rep.after(wrap);
+ document.querySelectorAll('#screen-settings .tab-item').forEach(b=>{if(/'account'/.test(b.getAttribute('onclick')||''))b.remove()});
+ const f=window.ftNavSub;if(typeof f==='function'&&!f.__mg){const w=function(s){const r=f.apply(this,arguments);if(s==='account'){try{renderAcctList();renderInstList()}catch(e){}}return r};w.__mg=1;w.__mnu=f.__mnu;window.ftNavSub=w}
+ try{renderAcctList();renderInstList()}catch(e){}}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();setTimeout(go,500)})();</script>
 </body>
 </html>
