@@ -2661,7 +2661,7 @@ const monthOf=d=>d?d.slice(0,7):'';
 const curMonth=()=>new Date().toISOString().slice(0,7);
 const dateLabel=d=>{if(!d)return'';const dt=new Date(d+'T00:00:00');const wd=dt.toLocaleDateString('vi-VN',{weekday:'short'});return `${wd}, ${fmtDMY(d)}`};
 const fmtDMY=d=>{if(!d)return'';const p=String(d).slice(0,10).split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:d};
-const CAT_ICONS={'Ăn uống':'🍜','Di chuyển':'🚗','Mua sắm':'🛒','Giáo dục':'📚','Y tế':'🏥','Giải trí':'🎮','Gia đình':'👨‍👩‍👧','Điện':'⚡','Nước':'💧','Internet':'🌐','Truyền hình':'📺','Điện thoại':'📱','Thuê nhà':'🏘️','Bảo hiểm':'🛡️','Hiếu hỉ':'💐','Lưu trú':'🏨','Chăm sóc cá nhân':'💇','Biếu tặng / Từ thiện':'💝','Được tặng / cho':'🧧','Bán đồ / thanh lý':'🏷️','Lương':'💼','Thưởng':'🎁','Đầu tư':'📈','Lợi nhuận đầu tư':'📈','Online':'💻','Thu nhập online':'💻','Tạm ứng':'🧾','Hoàn ứng':'↩️','Thu từ khách hàng':'🤝','Doanh thu':'💵','Hoàn thuế':'🏛️','Thu khác':'💰','Tiếp khách':'🍽️','Công tác phí':'✈️','Văn phòng phẩm':'📎','Lương nhân viên':'👥','Thuê văn phòng':'🏢','Thuế & phí':'💸','Marketing':'📣','Vận chuyển':'🚚','Chi khác':'📦','Doanh thu công việc':'🪙','Thu hồi vốn':'📥','Góp vốn / Đầu tư':'📤','Chi vận hành':'⚙️','Chi xây dựng':'🏗️','Nhân công':'👷','Phòng pháp chế':'⚖️','Vận hành':'⚙️','Trạm dừng chân':'🛣️','Trạm xăng':'⛽','Khác':'🗂️'};
+const CAT_ICONS={'Ăn uống':'🍜','Di chuyển':'🚗','Mua sắm':'🛒','Giáo dục':'📚','Y tế':'🏥','Giải trí':'🎮','Gia đình':'👨‍👩‍👧','Điện':'⚡','Nước':'💧','Internet':'🌐','Truyền hình':'📺','Điện thoại':'📱','Thuê nhà':'🏘️','Bảo hiểm':'🛡️','Hiếu hỉ':'💐','Lưu trú':'🏨','Chăm sóc cá nhân':'💇','Biếu tặng / Từ thiện':'💝','Được tặng / cho':'🧧','Bán đồ / thanh lý':'🏷️','Lương':'💼','Thưởng':'🎁','Đầu tư':'📈','Lợi nhuận đầu tư':'📈','Online':'💻','Thu nhập tăng ca':'💻','Tạm ứng':'🧾','Hoàn ứng':'↩️','Thu từ khách hàng':'🤝','Doanh thu':'💵','Hoàn thuế':'🏛️','Thu khác':'💰','Tiếp khách':'🍽️','Công tác phí':'✈️','Văn phòng phẩm':'📎','Lương nhân viên':'👥','Thuê văn phòng':'🏢','Thuế & phí':'💸','Marketing':'📣','Vận chuyển':'🚚','Chi khác':'📦','Doanh thu công việc':'🪙','Thu hồi vốn':'📥','Góp vốn / Đầu tư':'📤','Chi vận hành':'⚙️','Chi xây dựng':'🏗️','Nhân công':'👷','Phòng pháp chế':'⚖️','Vận hành':'⚙️','Trạm dừng chân':'🛣️','Trạm xăng':'⛽','Khác':'🗂️'};
 // ── SVG ICON SYSTEM ──
 const _ip={
 coffee:'<path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>',
@@ -2720,17 +2720,17 @@ const _isvg=p=>'<svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" st
 const I={};Object.keys(_ip).forEach(k=>I[k]=_isvg(k));
 const DOT=c=>'<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:'+c+';flex-shrink:0"></span>';
 const DOT_G=DOT('var(--green)'),DOT_R=DOT('var(--red)'),DOT_Y=DOT('#e5b910'),DOT_O=DOT('#e67e22'),DOT_B=DOT('#2980b9'),DOT_N=DOT('#94a3b8');
-(function(){const M={'Ăn uống':'coffee','Di chuyển':'truck','Mua sắm':'cart','Giáo dục':'book','Y tế':'act','Giải trí':'play','Gia đình':'home','Điện':'zap','Nước':'drop','Internet':'globe','Truyền hình':'tv','Điện thoại':'phone','Thuê nhà':'key','Bảo hiểm':'shield','Hiếu hỉ':'heart','Lưu trú':'bed','Chăm sóc cá nhân':'act','Biếu tặng / Từ thiện':'heart','Được tặng / cho':'gift','Bán đồ / thanh lý':'card','Lương':'brief','Thưởng':'gift','Đầu tư':'up','Lợi nhuận đầu tư':'up','Online':'mon','Thu nhập online':'mon','Tạm ứng':'file','Hoàn ứng':'undo','Thu từ khách hàng':'users','Doanh thu':'usd','Hoàn thuế':'bank','Thu khác':'card','Tiếp khách':'coffee','Công tác phí':'send','Văn phòng phẩm':'clip','Lương nhân viên':'users','Thuê văn phòng':'brief','Thuế & phí':'bank','Marketing':'mega','Vận chuyển':'truck','Chi khác':'pkg','Doanh thu công việc':'usd','Thu hồi vốn':'undo','Góp vốn / Đầu tư':'usd','Chi vận hành':'tool','Chi xây dựng':'tool','Nhân công':'user','Phòng pháp chế':'file','Vận hành':'tool','Trạm dừng chân':'map','Trạm xăng':'drop','Khác':'clip'};Object.keys(CAT_ICONS).forEach(k=>{CAT_ICONS[k]=I[M[k]]||I.clip});})();
+(function(){const M={'Ăn uống':'coffee','Di chuyển':'truck','Mua sắm':'cart','Giáo dục':'book','Y tế':'act','Giải trí':'play','Gia đình':'home','Điện':'zap','Nước':'drop','Internet':'globe','Truyền hình':'tv','Điện thoại':'phone','Thuê nhà':'key','Bảo hiểm':'shield','Hiếu hỉ':'heart','Lưu trú':'bed','Chăm sóc cá nhân':'act','Biếu tặng / Từ thiện':'heart','Được tặng / cho':'gift','Bán đồ / thanh lý':'card','Lương':'brief','Thưởng':'gift','Đầu tư':'up','Lợi nhuận đầu tư':'up','Online':'mon','Thu nhập tăng ca':'mon','Tạm ứng':'file','Hoàn ứng':'undo','Thu từ khách hàng':'users','Doanh thu':'usd','Hoàn thuế':'bank','Thu khác':'card','Tiếp khách':'coffee','Công tác phí':'send','Văn phòng phẩm':'clip','Lương nhân viên':'users','Thuê văn phòng':'brief','Thuế & phí':'bank','Marketing':'mega','Vận chuyển':'truck','Chi khác':'pkg','Doanh thu công việc':'usd','Thu hồi vốn':'undo','Góp vốn / Đầu tư':'usd','Chi vận hành':'tool','Chi xây dựng':'tool','Nhân công':'user','Phòng pháp chế':'file','Vận hành':'tool','Trạm dừng chân':'map','Trạm xăng':'drop','Khác':'clip'};Object.keys(CAT_ICONS).forEach(k=>{CAT_ICONS[k]=I[M[k]]||I.clip});})();
 // Danh mục theo domain (tab) & dòng tiền (in=thu, out=chi) — để nút + mỗi tab chỉ hiện đúng khoản của tab đó
 const DOMAIN_CATS={
   personal:{out:[['Ăn uống','🍜'],['Di chuyển','🚗'],['Mua sắm','🛒'],['Giáo dục','📚'],['Y tế','🏥'],['Điện','⚡'],['Nước','💧'],['Internet','🌐'],['Truyền hình','📺'],['Điện thoại','📱'],['Thuê nhà','🏘️'],['Bảo hiểm','🛡️'],['Hiếu hỉ','💐'],['Lưu trú','🏨'],['Chăm sóc cá nhân','💇'],['Biếu tặng / Từ thiện','💝'],['Giải trí','🎮'],['Gia đình','👨‍👩‍👧'],['Khác','🗂️']],
-    in:[['Lương','💼'],['Thưởng','🎁'],['Thu nhập online','💻'],['Lợi nhuận đầu tư','📈'],['Được tặng / cho','🧧'],['Bán đồ / thanh lý','🏷️'],['Khác','💰']]},
+    in:[['Lương','💼'],['Thưởng','🎁'],['Thu nhập tăng ca','💻'],['Lợi nhuận đầu tư','📈'],['Được tặng / cho','🧧'],['Bán đồ / thanh lý','🏷️'],['Khác','💰']]},
   company:{in:[['Tạm ứng','🧾'],['Hoàn ứng','↩️'],['Thu từ khách hàng','🤝'],['Doanh thu','💵'],['Hoàn thuế','🏛️'],['Thu khác','💰']],
     out:[['Tiếp khách','🍽️'],['Công tác phí','✈️'],['Văn phòng phẩm','📎'],['Lương nhân viên','👥'],['Thuê văn phòng','🏢'],['Thuế & phí','💸'],['Marketing','📣'],['Vận chuyển','🚚'],['Chi khác','📦']]},
   project:{in:[['Doanh thu công việc','🪙'],['Thu hồi vốn','📥'],['Thu khác','💰']],
     out:[['Góp vốn / Đầu tư','📤'],['Chi vận hành','⚙️'],['Chi xây dựng','🏗️'],['Nhân công','👷'],['Chi khác','📦']]}
 };
-(function(){const M={'Ăn uống':'coffee','Di chuyển':'truck','Mua sắm':'cart','Giáo dục':'book','Y tế':'act','Giải trí':'play','Gia đình':'home','Điện':'zap','Nước':'drop','Internet':'globe','Truyền hình':'tv','Điện thoại':'phone','Thuê nhà':'key','Bảo hiểm':'shield','Hiếu hỉ':'heart','Lưu trú':'bed','Chăm sóc cá nhân':'act','Biếu tặng / Từ thiện':'heart','Được tặng / cho':'gift','Bán đồ / thanh lý':'card','Lương':'brief','Thưởng':'gift','Đầu tư':'up','Lợi nhuận đầu tư':'up','Online':'mon','Thu nhập online':'mon','Tạm ứng':'file','Hoàn ứng':'undo','Thu từ khách hàng':'users','Doanh thu':'usd','Hoàn thuế':'bank','Thu khác':'card','Tiếp khách':'coffee','Công tác phí':'send','Văn phòng phẩm':'clip','Lương nhân viên':'users','Thuê văn phòng':'brief','Thuế & phí':'bank','Marketing':'mega','Vận chuyển':'truck','Chi khác':'pkg','Doanh thu công việc':'usd','Thu hồi vốn':'undo','Góp vốn / Đầu tư':'usd','Chi vận hành':'tool','Chi xây dựng':'tool','Nhân công':'user','Khác':'coin'};
+(function(){const M={'Ăn uống':'coffee','Di chuyển':'truck','Mua sắm':'cart','Giáo dục':'book','Y tế':'act','Giải trí':'play','Gia đình':'home','Điện':'zap','Nước':'drop','Internet':'globe','Truyền hình':'tv','Điện thoại':'phone','Thuê nhà':'key','Bảo hiểm':'shield','Hiếu hỉ':'heart','Lưu trú':'bed','Chăm sóc cá nhân':'act','Biếu tặng / Từ thiện':'heart','Được tặng / cho':'gift','Bán đồ / thanh lý':'card','Lương':'brief','Thưởng':'gift','Đầu tư':'up','Lợi nhuận đầu tư':'up','Online':'mon','Thu nhập tăng ca':'mon','Tạm ứng':'file','Hoàn ứng':'undo','Thu từ khách hàng':'users','Doanh thu':'usd','Hoàn thuế':'bank','Thu khác':'card','Tiếp khách':'coffee','Công tác phí':'send','Văn phòng phẩm':'clip','Lương nhân viên':'users','Thuê văn phòng':'brief','Thuế & phí':'bank','Marketing':'mega','Vận chuyển':'truck','Chi khác':'pkg','Doanh thu công việc':'usd','Thu hồi vốn':'undo','Góp vốn / Đầu tư':'usd','Chi vận hành':'tool','Chi xây dựng':'tool','Nhân công':'user','Khác':'coin'};
 Object.values(DOMAIN_CATS).forEach(d=>Object.values(d).forEach(list=>list.forEach(p=>{p[1]=I[M[p[0]]]||I.clip})));})();
 const CAT_COLORS=['#1a3c5e','#2980b9','#16a085','#8e44ad','#d35400','#c2185b','#5d4037','#f39c12','#7f8c8d','#e91e63','#0e7490','#6a1b9a','#b7791f','#2c3e50','#00897b','#5e35b1','#ef6c00','#3949ab'];
 
@@ -4670,10 +4670,13 @@ function renderTrips(domain){
     const dates=tr.startDate?fmtDMY(tr.startDate)+(tr.endDate&&tr.endDate!==tr.startDate?' – '+fmtDMY(tr.endDate):''):'';
     let bar='';
     if(tr.budget){const pct=Math.min(100,Math.round(s.chi/tr.budget*100));const over=s.chi>tr.budget;const col=over?'var(--red)':pct>=80?'#e67e22':'var(--green)';bar=`<div style="margin-top:9px"><div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:4px"><span>Ngân sách ${fmtK(tr.budget)} đ</span><span style="color:${col};font-weight:600">${over?'Vượt '+fmtK(s.chi-tr.budget)+' đ':pct+'%'}</span></div><div style="height:6px;border-radius:4px;background:var(--light);overflow:hidden"><div style="height:100%;width:${pct}%;background:${col};border-radius:4px"></div></div></div>`;}
-    return`<div class="card" style="margin:8px 12px;padding:13px 15px;cursor:pointer" onclick="openTrip('${tr.id}')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
-        <div style="min-width:0"><div style="font-weight:600;font-size:15px">${tr.name}${done?' <span style="font-size:12px;background:var(--light);color:var(--muted);border-radius:5px;padding:1px 6px;font-weight:500">đã kết thúc</span>':''}</div><div style="font-size:13px;color:var(--muted);margin-top:2px">${dates?dates+' · ':''}${s.count} khoản</div></div>
-        <div style="text-align:right;flex-shrink:0"><div style="font-size:12px;color:var(--muted)">Chi thực</div><div style="font-weight:700;font-size:16px;color:var(--red)">${fmtK(s.net)} đ</div></div>
+    return`<div class="card" style="margin:8px 12px;padding:14px 15px;cursor:pointer" onclick="openTrip('${tr.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <div style="min-width:0;flex:1">
+          <div style="display:flex;align-items:center;gap:8px;min-width:0"><span style="font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${tr.name}</span>${done?'<span style="flex-shrink:0;font-size:12px;background:var(--light);color:var(--muted);border-radius:6px;padding:2px 7px;font-weight:500">Đã kết thúc</span>':''}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px 10px;font-size:13px;color:var(--muted);margin-top:4px">${dates?'<span>'+dates+'</span>':''}<span>${s.count} khoản</span></div>
+        </div>
+        <div style="text-align:right;flex-shrink:0"><div style="font-size:12px;color:var(--muted)">Chi thực</div><div style="font-weight:700;font-size:17px;color:${done?'var(--text)':'var(--red)'};font-variant-numeric:tabular-nums;margin-top:1px">${fmtK(s.net)} đ</div></div>
       </div>${bar}
     </div>`;
   }).join('');
@@ -6018,7 +6021,6 @@ async function initFirebase() {
         lastSyncTime = localMtime;
         renderAll();
         updateSyncUI('synced');
-        showSyncToast(dec[0]==='merge'?'Đã gộp thay đổi từ thiết bị khác':'Đã nhận dữ liệu mới từ thiết bị khác');
         if (needPush) scheduleSync(setDoc, doc, serverTimestamp);
       } catch(e) { console.warn('Sync parse error', e); }
     });
@@ -6091,7 +6093,6 @@ async function pullFromCloud(getDoc, doc) {
     if (dec[0] !== 'ignore') {
       ftApplyCloud(dec[0], cloudDb, data, dec[1]);
       renderAll();
-      if (dec[0] === 'merge') try{showSyncToast('Đã gộp thay đổi từ thiết bị khác')}catch(e){}
     }
     lastSyncTime = data._updatedAt || Date.now();
   } catch(e) { console.warn('Pull error:', e); }
@@ -6261,7 +6262,6 @@ async function initSettingsSync(doc,setDoc,getDoc,onSnapshot){
     const s=snap.data()[SETTINGS_FIELD];if(!s||s.deviceId===DEVICE_ID)return;
     const cs=s.seq||0;if(cs<=settingsSeq)return;
     adoptSettings(s);
-    if(typeof showSyncToast==='function')showSyncToast('Đã nhận cài đặt mới từ thiết bị khác');
   });
 }
 // Init Firebase sau khi app load
@@ -6866,7 +6866,7 @@ function pickCat(desc,flow,hist){
   if(hist&&hist.category)return hist.category;
   if(flow==='in'){
     const d=nz(desc);
-    const M=[['luong','Lương'],['thuong|bonus','Thưởng'],['online|affiliate|youtube','Thu nhập online'],['lai|co tuc|dau tu','Lợi nhuận đầu tư'],['tang|cho|li xi|mung','Được tặng / cho'],['ban|thanh ly','Bán đồ / thanh lý']];
+    const M=[['luong','Lương'],['thuong|bonus','Thưởng'],['tang ca|lam them|overtime','Thu nhập tăng ca'],['lai|co tuc|dau tu','Lợi nhuận đầu tư'],['tang|cho|li xi|mung','Được tặng / cho'],['ban|thanh ly','Bán đồ / thanh lý']];
     for(const [re,c] of M)if(W(re).test(d)&&names.includes(c))return c;
     return names.includes('Khác')?'Khác':(names[names.length-1]||'Khác');
   }
@@ -8690,7 +8690,12 @@ dock();document.addEventListener('DOMContentLoaded',dock);
 let t;window.addEventListener('scroll',()=>{document.body.classList.add('mn-scrolling');clearTimeout(t);t=setTimeout(()=>document.body.classList.remove('mn-scrolling'),700)},{passive:true});})();</script>
 <style id="mn-safe-fix">
 /* Dòng "Thu chi · Tháng …" đầu trang: rõ, không bị lẫn vào vùng tai thỏ */
-#topbar{padding-top:calc(env(safe-area-inset-top,0px) + 14px)!important}
+html body #topbar,html body #topbar.tb-compact{padding-top:calc(max(env(safe-area-inset-top,0px),24px) + 30px)!important}
+/* Thanh chọn (segmented) trên điện thoại: không bóp, không mất chữ — thiếu chỗ thì vuốt ngang */
+@media (max-width:480px){
+html body .tab-bar,html body .seg,html body .chip-row,html body .type-toggle,html body #annual-seg,html body .asset-class-row{overflow-x:auto!important;overflow-y:hidden!important;flex-wrap:nowrap!important;padding:2px!important;gap:2px!important;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;max-width:calc(100% - 24px)}
+html body .tab-item,html body .seg button,html body .chip,html body .type-btn,html body .proj-seg,html body .acct-chip{flex:1 0 auto!important;min-width:max-content!important;max-width:none!important;padding:0 10px!important;font-size:13px!important;letter-spacing:-.1px!important;white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;scroll-snap-align:start}
+}
 html body #top-caption,html body.tbB #top-caption,html body.tbC #top-caption{position:relative;z-index:2;color:#4e5a70!important;opacity:1!important;font-weight:600!important;font-size:15px!important;margin:4px 0 2px!important;max-height:none!important}
 html body.dark #top-caption{color:#a9b6c9!important}
 html body #top-greeting,html body.tbB .topbar-greeting,html body.tbC .topbar-greeting{color:#4e5a70!important;opacity:1!important;font-weight:600!important;font-size:15px!important;position:relative;z-index:2}
@@ -8703,5 +8708,7 @@ html body .modal-overlay .modal .btn-row{margin-top:18px!important;gap:10px!impo
 html body .modal-overlay .modal .btn-row .btn{min-height:52px!important;border-radius:14px!important}
 html body #qa-chat .modal{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 30px)!important}
 </style>
+<script>/* đổi danh mục cũ "Thu nhập online" → "Thu nhập tăng ca" */(function(){const O='Thu nhập online',N='Thu nhập tăng ca';function m(){try{if(typeof db==='undefined'||!db)return false;let c=0;(db.transactions||[]).forEach(t=>{if(t.category===O){t.category=N;c++}});(db.recurring||[]).forEach(t=>{if(t.category===O){t.category=N;c++}});(db.budgets||[]).forEach(t=>{if(t.category===O){t.category=N;c++}});return c>0}catch(e){return false}}
+const r=window.renderAll;if(typeof r==='function'){window.renderAll=function(){if(m()&&typeof save==='function'){try{save()}catch(e){}}return r.apply(this,arguments)}}})();</script>
 </body>
 </html>
