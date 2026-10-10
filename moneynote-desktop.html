@@ -8386,5 +8386,9 @@ window.mnuReport=()=>report().txt;
  const f=window.ftNavSub;if(typeof f==='function'&&!f.__mg){const w=function(s){const r=f.apply(this,arguments);if(s==='account'){try{renderAcctList();renderInstList()}catch(e){}}return r};w.__mg=1;w.__mnu=f.__mnu;window.ftNavSub=w}
  try{renderAcctList();renderInstList()}catch(e){}}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();setTimeout(go,500)})();</script>
+<script>/* Tự kiểm tra bản mới khi mở/quay lại app (app màn hình chính iOS không tự tải lại) */(function(){if(!('serviceWorker' in navigator))return;let busy=0,last=0,rl=0;
+navigator.serviceWorker.addEventListener('controllerchange',()=>{if(rl)return;rl=1;location.reload()});
+async function chk(){const now=Date.now();if(busy||now-last<20000||!navigator.onLine)return;busy=1;last=now;try{const base=location.pathname.replace(/[^/]*$/,'');const t=await (await fetch(base+'sw.js?t='+now,{cache:'no-store'})).text();const m=t.match(/CACHE\s*=\s*'([^']+)'/);if(!m)return;if(await caches.has(m[1]))return;const r=await navigator.serviceWorker.getRegistration();if(r)await r.update()}catch(e){}finally{busy=0}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()});addEventListener('focus',chk);addEventListener('pageshow',chk);setTimeout(chk,3000);setInterval(chk,30*60000)})();</script>
 </body>
 </html>
