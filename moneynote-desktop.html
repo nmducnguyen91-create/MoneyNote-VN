@@ -3856,7 +3856,8 @@ function forecastData(days){
     const nm=String(a.name||'').replace(/^thẻ\s+/i,'');let sPay=0;try{sPay=stmtSplit(a).pay||0}catch(e){sPay=CI.stmt||0}
     const per=k=>{const l=CI.insts.filter(i=>i.term-(i.paid||0)-(instInStmt(i,CI.closeStr)?1:0)>k);return l.reduce((x,i)=>x+(+i.per||0),0)+(l.length?(+a.instFeeMonthly||0):0)};
     let d=nextDueDate(a);if(!d)return;
-    if(sPay>0){if(d>=td&&d<=end)events.push({date:iso(d),name:'Hạn thẻ '+nm+' · sao kê đã chốt',amt:-sPay,type:'Thẻ'});d=new Date(d.getFullYear(),d.getMonth()+1,a.dueDay)}
+    let dueOfClosed=sPay>0;try{if(!dueOfClosed&&CI.closeStr){const c=new Date(CI.closeStr+'T00:00:00'),nc=new Date(c.getFullYear(),c.getMonth()+1,c.getDate());dueOfClosed=d>c&&d<=nc}}catch(e){}
+    if(dueOfClosed){if(sPay>0&&d>=td&&d<=end)events.push({date:iso(d),name:'Hạn thẻ '+nm+' · sao kê đã chốt',amt:-sPay,type:'Thẻ'});d=new Date(d.getFullYear(),d.getMonth()+1,a.dueDay)}
     let k=0,first=true;
     while(d<=end){const amt=(first?CI.cyc:0)+per(k);if(amt>0&&d>=td)events.push({date:iso(d),name:'Hạn thẻ '+nm+(first&&CI.cyc?' (dự kiến · chi kỳ mới + góp)':' (trả góp)'),amt:-Math.round(amt),type:'Thẻ'});first=false;k++;d=new Date(d.getFullYear(),d.getMonth()+1,a.dueDay)}
   });
@@ -6476,7 +6477,7 @@ function bkOpen(){return new Promise((ok,no)=>{if(BKDB)return ok(BKDB);if(!windo
 async function bkList(){const d=await bkOpen();return new Promise(ok=>{const q=d.transaction('snaps').objectStore('snaps').getAll();q.onsuccess=()=>ok((q.result||[]).sort((a,b)=>b.at-a.at));q.onerror=()=>ok([])})}
 async function bkTx(fn){const d=await bkOpen();return new Promise(ok=>{const tx=d.transaction('snaps','readwrite');fn(tx.objectStore('snaps'));tx.oncomplete=()=>ok();tx.onerror=()=>ok()})}
 const dtf=at=>{const d=new Date(at);return dm(d)+'/'+d.getFullYear()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
-window.bkSnap=async function(reason){try{const data=JSON.stringify(ftFull());await bkTx(s=>s.put({at:Date.now(),n:(db.transactions||[]).length,size:data.length,reason:reason||'Lưu tay',data}));const L=await bkList();if(L.length>8)await bkTx(s=>L.slice(8).forEach(x=>s.delete(x.at)));localStorage.setItem('ftBkAuto',String(Date.now()));renderBackup();if(reason==='Lưu tay')toast('Đã tạo bản lưu trên máy ✓')}catch(e){toast('Không lưu được: '+e.message)}};
+window.bkSnap=async function(reason){try{const data=JSON.stringify(ftFull());await bkTx(s=>s.put({at:Date.now(),n:(db.transactions||[]).length,size:data.length,reason:reason||'Lưu tay',data}));const L=await bkList();if(L.length>30)await bkTx(s=>L.slice(30).forEach(x=>s.delete(x.at)));localStorage.setItem('ftBkAuto',String(Date.now()));renderBackup();if(reason==='Lưu tay')toast('Đã tạo bản lưu trên máy ✓')}catch(e){toast('Không lưu được: '+e.message)}};
 window.backupShare=async function(){
   const name='moneynote-'+today()+'.json',blob=new Blob([JSON.stringify(ftFull(),null,1)],{type:'application/json'});
   const mark=()=>{localStorage.setItem('ftBkExport',String(Date.now()));renderBackup()};
@@ -6494,17 +6495,18 @@ window.renderBackup=async function(){
   const days=bkExportDays(),ex=+localStorage.getItem('ftBkExport')||0,late=days==null||days>7;
   el.innerHTML='<div style="font-size:14px;color:var(--muted);margin-bottom:10px;line-height:1.5">Sao lưu ra ngoài gần nhất: <b style="color:'+(late?'var(--red)':'var(--text)')+'">'+(ex?dtf(ex)+(days?' · '+days+' ngày trước':' · hôm nay'):'chưa có')+'</b></div>'
    +'<button class="btn btn-primary" style="width:100%" onclick="backupShare()">Sao lưu ra Tệp / iCloud / Drive</button>'
-   +'<div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:18px 0 0">Bản lưu trên máy · tự động mỗi tuần</div>'
+   +'<div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:18px 0 0">Bản lưu trên máy · tự động mỗi ngày</div>'
    +(L.length?'<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">'+L.map((s,i)=>{const d=new Date(s.at),hm=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'),auto=/Tự động/.test(s.reason),pre=/Trước khi/.test(s.reason);
       return '<div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--bdr);border-radius:14px;background:var(--light)">'
        +'<div style="width:46px;height:46px;border-radius:12px;background:var(--card,#fff);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;line-height:1.05"><b style="font-size:18px">'+String(d.getDate()).padStart(2,'0')+'</b><span style="font-size:11px;color:var(--muted)">Th'+(d.getMonth()+1)+'</span></div>'
-       +'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b style="font-size:15px">'+escH(auto?'Tự động hằng tuần':pre?'Trước khi khôi phục':s.reason)+'</b>'+(i===0?'<span style="font-size:11px;font-weight:700;color:var(--green);background:#e3f6ea;border-radius:6px;padding:1px 6px">Mới nhất</span>':'')+'</div>'
+       +'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b style="font-size:15px">'+escH(auto?'Tự động hằng ngày':pre?'Trước khi khôi phục':s.reason)+'</b>'+(i===0?'<span style="font-size:11px;font-weight:700;color:var(--green);background:#e3f6ea;border-radius:6px;padding:1px 6px">Mới nhất</span>':'')+'</div>'
        +'<div style="font-size:13px;color:var(--muted);margin-top:2px">'+hm+' · '+d.getFullYear()+' · '+s.n+' giao dịch · '+Math.max(1,Math.round(s.size/1024))+' KB</div></div>'
-       +'<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0"><button type="button" onclick="bkRestore('+s.at+')" style="min-width:84px;min-height:32px;border-radius:9px;border:1px solid var(--navy);background:var(--card,#fff);color:var(--navy);font:600 13px inherit;font-family:inherit;cursor:pointer">Khôi phục</button><button type="button" onclick="bkDownload('+s.at+')" style="min-width:84px;min-height:32px;border-radius:9px;border:1px solid var(--bdr);background:transparent;color:var(--muted);font:600 13px inherit;font-family:inherit;cursor:pointer">Tải file</button></div></div>'}).join('')+'</div>':'<div style="font-size:14px;color:var(--muted);padding:6px 0">Chưa có bản nào — app tự lưu mỗi tuần.</div>')
+       +'<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0"><button type="button" onclick="bkRestore('+s.at+')" style="min-width:84px;min-height:32px;border-radius:9px;border:1px solid var(--navy);background:var(--card,#fff);color:var(--navy);font:600 13px inherit;font-family:inherit;cursor:pointer">Khôi phục</button><button type="button" onclick="bkDownload('+s.at+')" style="min-width:84px;min-height:32px;border-radius:9px;border:1px solid var(--bdr);background:transparent;color:var(--muted);font:600 13px inherit;font-family:inherit;cursor:pointer">Tải file</button></div></div>'}).join('')+'</div>':'<div style="font-size:14px;color:var(--muted);padding:6px 0">Chưa có bản nào — app tự lưu mỗi ngày.</div>')
    +'<button class="btn" style="width:100%;margin-top:10px" onclick="bkSnap(\'Lưu tay\')">Tạo bản lưu trên máy ngay</button>'
-   +'<div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.5">Bản trên máy giữ 8 bản gần nhất, dùng khi lỡ xoá hoặc đồng bộ sai. Nên sao lưu ra Tệp/iCloud mỗi tuần để phòng mất máy.</div>';
+   +'<div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.5">Bản trên máy giữ 30 bản gần nhất, dùng khi lỡ xoá hoặc đồng bộ sai. Nên sao lưu ra Tệp/iCloud mỗi tuần để phòng mất máy.</div>';
 };
-setTimeout(async()=>{try{if(!(db.transactions||[]).length)return;const last=+localStorage.getItem('ftBkAuto')||0;if(Date.now()-last>=7*864e5)await bkSnap('Tự động hằng tuần');else renderBackup()}catch(e){}},9000);
+const bkDaily=async()=>{try{if(!(db.transactions||[]).length)return;const k=isoD(new Date());if(localStorage.getItem('ftBkDay')===k){renderBackup();return}await bkSnap('Tự động hằng ngày');localStorage.setItem('ftBkDay',k)}catch(e){}};
+setTimeout(bkDaily,9000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(bkDaily,4000)});setInterval(bkDaily,36e5);
 
 /* ── Widget iPhone ── */
 const WG_KEY='AIzaSyAwpp6UWe7yMLqhQlOmGc2lWHOVUqQFkYQ';

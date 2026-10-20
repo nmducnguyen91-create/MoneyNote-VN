@@ -3985,7 +3985,8 @@ function forecastData(days){
     const nm=String(a.name||'').replace(/^thẻ\s+/i,'');let sPay=0;try{sPay=stmtSplit(a).pay||0}catch(e){sPay=CI.stmt||0}
     const per=k=>{const l=CI.insts.filter(i=>i.term-(i.paid||0)-(instInStmt(i,CI.closeStr)?1:0)>k);return l.reduce((x,i)=>x+(+i.per||0),0)+(l.length?(+a.instFeeMonthly||0):0)};
     let d=nextDueDate(a);if(!d)return;
-    if(sPay>0){if(d>=td&&d<=end)events.push({date:iso(d),name:'Hạn thẻ '+nm+' · sao kê đã chốt',amt:-sPay,type:'Thẻ'});d=new Date(d.getFullYear(),d.getMonth()+1,a.dueDay)}
+    let dueOfClosed=sPay>0;try{if(!dueOfClosed&&CI.closeStr){const c=new Date(CI.closeStr+'T00:00:00'),nc=new Date(c.getFullYear(),c.getMonth()+1,c.getDate());dueOfClosed=d>c&&d<=nc}}catch(e){}
+    if(dueOfClosed){if(sPay>0&&d>=td&&d<=end)events.push({date:iso(d),name:'Hạn thẻ '+nm+' · sao kê đã chốt',amt:-sPay,type:'Thẻ'});d=new Date(d.getFullYear(),d.getMonth()+1,a.dueDay)}
     let k=0,first=true;
     while(d<=end){const amt=(first?CI.cyc:0)+per(k);if(amt>0&&d>=td)events.push({date:iso(d),name:'Hạn thẻ '+nm+(first&&CI.cyc?' (dự kiến · chi kỳ mới + góp)':' (trả góp)'),amt:-Math.round(amt),type:'Thẻ'});first=false;k++;d=new Date(d.getFullYear(),d.getMonth()+1,a.dueDay)}
   });
@@ -4348,7 +4349,7 @@ function openQuickAdd(){
   const old=document.getElementById('quick-add-menu');if(old)old.remove();
   const m=document.createElement('div');m.id='quick-add-menu';
   m.style.cssText='position:fixed;right:16px;bottom:150px;z-index:1200;display:flex;flex-direction:column;gap:8px;align-items:flex-end';
-  const items=[['Nhập nhanh (chat)','openQaChat()'],['− Chi nhanh',"openAddModal('personal');setTxType('expense')"],['+ Thu nhanh',"openAddModal('personal');setTxType('income')"],['Hồ sơ dịch vụ','openSvcForm()'],['Lệnh đầu tư',"openAddModal('invest')"],['Máy tính','openCalc()']];
+  const items=[['Ghi nhanh 3 bước','openQuickWiz()'],['Nhập nhanh (chat)','openQaChat()'],['− Chi nhanh',"openAddModal('personal');setTxType('expense')"],['+ Thu nhanh',"openAddModal('personal');setTxType('income')"],['Hồ sơ dịch vụ','openSvcForm()'],['Lệnh đầu tư',"openAddModal('invest')"],['Máy tính','openCalc()']];
   m.innerHTML=items.map(it=>`<button onclick="document.getElementById('quick-add-menu').remove();${it[1]}" style="background:var(--card);color:var(--text);border:1px solid var(--bdr);border-radius:12px;padding:11px 15px;font-size:15px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.18);cursor:pointer;font-family:inherit">${it[0]}</button>`).join('');
   document.body.appendChild(m);
   setTimeout(()=>{const h=e=>{if(!m.contains(e.target)){m.remove();document.removeEventListener('pointerdown',h,true)}};document.addEventListener('pointerdown',h,true)},100);
@@ -6688,7 +6689,7 @@ function bkOpen(){return new Promise((ok,no)=>{if(BKDB)return ok(BKDB);if(!windo
 async function bkList(){const d=await bkOpen();return new Promise(ok=>{const q=d.transaction('snaps').objectStore('snaps').getAll();q.onsuccess=()=>ok((q.result||[]).sort((a,b)=>b.at-a.at));q.onerror=()=>ok([])})}
 async function bkTx(fn){const d=await bkOpen();return new Promise(ok=>{const tx=d.transaction('snaps','readwrite');fn(tx.objectStore('snaps'));tx.oncomplete=()=>ok();tx.onerror=()=>ok()})}
 const dtf=at=>{const d=new Date(at);return dm(d)+'/'+d.getFullYear()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
-window.bkSnap=async function(reason){try{const data=JSON.stringify(ftFull());await bkTx(s=>s.put({at:Date.now(),n:(db.transactions||[]).length,size:data.length,reason:reason||'Lưu tay',data}));const L=await bkList();if(L.length>8)await bkTx(s=>L.slice(8).forEach(x=>s.delete(x.at)));localStorage.setItem('ftBkAuto',String(Date.now()));renderBackup();if(reason==='Lưu tay')toast('Đã tạo bản lưu trên máy ✓')}catch(e){toast('Không lưu được: '+e.message)}};
+window.bkSnap=async function(reason){try{const data=JSON.stringify(ftFull());await bkTx(s=>s.put({at:Date.now(),n:(db.transactions||[]).length,size:data.length,reason:reason||'Lưu tay',data}));const L=await bkList();if(L.length>30)await bkTx(s=>L.slice(30).forEach(x=>s.delete(x.at)));localStorage.setItem('ftBkAuto',String(Date.now()));renderBackup();if(reason==='Lưu tay')toast('Đã tạo bản lưu trên máy ✓')}catch(e){toast('Không lưu được: '+e.message)}};
 window.backupShare=async function(){
   const name='moneynote-'+today()+'.json',blob=new Blob([JSON.stringify(ftFull(),null,1)],{type:'application/json'});
   const mark=()=>{localStorage.setItem('ftBkExport',String(Date.now()));renderBackup()};
@@ -6709,7 +6710,7 @@ window.renderBackup=async function(){
   const row=(ic,t,s,right)=>'<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--bdr)"><div style="width:36px;height:36px;border-radius:10px;background:var(--light);color:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ic+'</div><div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600">'+t+'</div><div style="font-size:13px;color:var(--muted);margin-top:1px;line-height:1.4">'+s+'</div></div>'+(right||'')+'</div>';
   const sv=p=>'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
   el.innerHTML='<div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px">Dữ liệu đang được lưu ở</div>'
-   +row(sv('<rect x="7" y="2" width="10" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/>'),'Bộ nhớ app trên máy này',L.length+' bản · '+kb+' KB · tự lưu mỗi tuần, giữ 8 bản gần nhất')
+   +row(sv('<rect x="7" y="2" width="10" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/>'),'Bộ nhớ app trên máy này',L.length+' bản · '+kb+' KB · tự lưu mỗi ngày, giữ 30 bản gần nhất')
    +row(sv('<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>'),'Ra ngoài · '+(dest?escH(dest):'Tệp / iCloud / Drive'),'Gần nhất: <b style="color:'+(late?'var(--red)':'var(--text)')+'">'+(ex?dtf(ex)+(days?' · '+days+' ngày trước':' · hôm nay'):'chưa có')+'</b>'+(late?' · nên sao lưu':''))
    +'<div style="display:flex;gap:8px;align-items:center;margin-top:6px"><input id="bk-dest" class="form-input" placeholder="Ghi nơi lưu, VD: iCloud Drive › MoneyNote" value="'+escH(dest)+'" style="flex:1;min-width:0;font-size:15px" onchange="localStorage.setItem(\'ftBkDest\',this.value.trim());renderBackup()"></div>'
    +'<div style="font-size:13px;color:var(--muted);margin-top:6px;line-height:1.45">iPhone không cho app tự chọn thư mục cố định — mỗi lần bấm sao lưu, chọn đúng thư mục ở bảng chia sẻ (Lưu vào Tệp → chọn thư mục).</div>'
@@ -6718,13 +6719,14 @@ window.renderBackup=async function(){
    +(L.length?'<div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">'+L.map((s,i)=>{const d=new Date(s.at),hm=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'),auto=/Tự động/.test(s.reason),pre=/Trước khi/.test(s.reason);
       return '<div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--bdr);border-radius:14px;background:var(--light)">'
        +'<div style="width:46px;height:46px;border-radius:12px;background:var(--card,#fff);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;line-height:1.05"><b style="font-size:17px">'+String(d.getDate()).padStart(2,'0')+'</b><span style="font-size:13px;color:var(--muted)">Th'+(d.getMonth()+1)+'</span></div>'
-       +'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b style="font-size:15px">'+escH(auto?'Tự động hằng tuần':pre?'Trước khi khôi phục':s.reason)+'</b>'+(i===0?'<span style="font-size:13px;font-weight:700;color:var(--green);background:#e3f6ea;border-radius:6px;padding:1px 6px">Mới nhất</span>':'')+'</div>'
+       +'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b style="font-size:15px">'+escH(auto?'Tự động hằng ngày':pre?'Trước khi khôi phục':s.reason)+'</b>'+(i===0?'<span style="font-size:13px;font-weight:700;color:var(--green);background:#e3f6ea;border-radius:6px;padding:1px 6px">Mới nhất</span>':'')+'</div>'
        +'<div style="font-size:15px;color:var(--muted);margin-top:2px">'+hm+' · '+d.getFullYear()+' · '+s.n+' giao dịch · '+Math.max(1,Math.round(s.size/1024))+' KB</div></div>'
-       +'<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0"><button type="button" onclick="bkRestore('+s.at+')" style="min-width:84px;min-height:32px;border-radius:9px;border:1px solid var(--navy);background:var(--card,#fff);color:var(--navy);font-weight:600;font-size:15px;font-family:inherit;cursor:pointer">Khôi phục</button><button type="button" onclick="bkDownload('+s.at+')" style="min-width:84px;min-height:32px;border-radius:9px;border:1px solid var(--bdr);background:transparent;color:var(--muted);font-weight:600;font-size:15px;font-family:inherit;cursor:pointer">Lưu ra…</button></div></div>'}).join('')+'</div>':'<div style="font-size:15px;color:var(--muted);padding:6px 0">Chưa có bản nào — app tự lưu mỗi tuần.</div>')
+       +'<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0"><button type="button" onclick="bkRestore('+s.at+')" style="min-width:84px;min-height:32px;border-radius:9px;border:1px solid var(--navy);background:var(--card,#fff);color:var(--navy);font-weight:600;font-size:15px;font-family:inherit;cursor:pointer">Khôi phục</button><button type="button" onclick="bkDownload('+s.at+')" style="min-width:84px;min-height:32px;border-radius:9px;border:1px solid var(--bdr);background:transparent;color:var(--muted);font-weight:600;font-size:15px;font-family:inherit;cursor:pointer">Lưu ra…</button></div></div>'}).join('')+'</div>':'<div style="font-size:15px;color:var(--muted);padding:6px 0">Chưa có bản nào — app tự lưu mỗi ngày.</div>')
    +'<button class="btn" style="width:100%;margin-top:10px" onclick="bkSnap(\'Lưu tay\')">Tạo bản lưu trên máy ngay</button>'
-   +'<div style="font-size:15px;color:var(--muted);margin-top:8px;line-height:1.5">Bản trên máy giữ 8 bản gần nhất, dùng khi lỡ xoá hoặc đồng bộ sai. Nên sao lưu ra Tệp/iCloud mỗi tuần để phòng mất máy.</div>';
+   +'<div style="font-size:15px;color:var(--muted);margin-top:8px;line-height:1.5">Bản trên máy giữ 30 bản gần nhất, dùng khi lỡ xoá hoặc đồng bộ sai. Nên sao lưu ra Tệp/iCloud mỗi tuần để phòng mất máy.</div>';
 };
-setTimeout(async()=>{try{if(!(db.transactions||[]).length)return;const last=+localStorage.getItem('ftBkAuto')||0;if(Date.now()-last>=7*864e5)await bkSnap('Tự động hằng tuần');else renderBackup()}catch(e){}},9000);
+const bkDaily=async()=>{try{if(!(db.transactions||[]).length)return;const k=isoD(new Date());if(localStorage.getItem('ftBkDay')===k){renderBackup();return}await bkSnap('Tự động hằng ngày');localStorage.setItem('ftBkDay',k)}catch(e){}};
+setTimeout(bkDaily,9000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(bkDaily,4000)});setInterval(bkDaily,36e5);
 
 /* ── Widget iPhone ── */
 const WG_KEY='AIzaSyAwpp6UWe7yMLqhQlOmGc2lWHOVUqQFkYQ';
@@ -8149,7 +8151,7 @@ window.qaHelp=function(){
   const b=baseUrl();
   const row=(label,url)=>`<div style="margin-top:8px"><b>${label}</b><div style="display:flex;gap:6px;align-items:center;margin-top:3px"><code style="flex:1">${esc(url)}</code><button class="qa-chip" type="button" onclick="qaCopy(this,'${esc(url)}')">Chép</button></div></div>`;
   log(`<div class="qa-bot" id="qa-help"><b>Nhập nhanh không cần mở app</b>
-  ${row('Mở ô chat này',b+'#chat')}${row('Mở form thêm giao dịch',b+'#add')}${row('Tự ghi khi chạm Apple Pay',b+'#chat?save=1&text=')}
+  ${row('Ghi nhanh 3 bước (chi)',b+'#quick')}${row('Ghi nhanh 3 bước (thu)',b+'#quick?type=in')}${row('Mở ô chat này',b+'#chat')}${row('Mở form thêm giao dịch',b+'#add')}${row('Tự ghi khi chạm Apple Pay',b+'#chat?save=1&text=')}
   <div style="margin-top:10px">1. App <b>Phím tắt</b> → + → <b>Mở URL</b> → dán link → đặt tên “Ghi chi tiêu”.<br>
   2. <b>Cài đặt → Trợ năng → Cảm ứng → Chạm mặt sau</b> → Chạm hai lần → chọn phím tắt. Hoặc thêm vào Trung tâm điều khiển / màn hình chính.<br>
   3. Apple Pay: Phím tắt → <b>Tự động hoá → Giao dịch</b> → chọn thẻ → Chạy ngay → Mở URL = link thứ 3 + biến <i>Người bán</i>, <i>Số tiền</i>, <i>Thẻ</i>.</div></div>`);
@@ -8172,11 +8174,12 @@ function formBoost(){
 
 /* ── Link #add / #chat ── */
 function handleHash(){
-  const h=location.hash||'';const m=/^#(add|chat)(?:\?(.*))?$/.exec(h);if(!m)return;
+  const h=location.hash||'';const m=/^#(add|chat|quick)(?:\?(.*))?$/.exec(h);if(!m)return;
   const p=new URLSearchParams(m[2]||'');
   try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
   const go=()=>{
     if(m[1]==='chat'){openQaChat(p.get('text')||'',p.get('save')==='1');return}
+    if(m[1]==='quick'){openQuickWiz(p.get('type')==='in'?'in':'out');return}
     const it={flow:p.get('type')==='in'?'in':'out'};
     if(p.get('amount')){const a=findAmount(nz(p.get('amount')));if(a)it.amount=a.v}
     if(p.get('desc'))it.desc=p.get('desc');
@@ -8191,6 +8194,55 @@ function handleHash(){
   })();
 }
 window.addEventListener('hashchange',handleHash);
+
+/* ── Ghi nhanh 3 bước: Thu/Chi + số tiền → khoản → tài khoản (lưu luôn) ── */
+let qw={flow:'out',amount:0,cat:''};
+function qwEl(){let o=$('qw-ov');if(o)return o;o=document.createElement('div');o.id='qw-ov';o.setAttribute('data-nomask','');
+  o.style.cssText='position:fixed;inset:0;z-index:1250;background:rgba(10,20,32,.45);display:flex;align-items:flex-end;justify-content:center';
+  o.onclick=e=>{if(e.target===o)closeQuickWiz()};
+  o.innerHTML='<div id="qw-box" style="width:100%;max-width:430px;max-height:86vh;overflow:auto;background:var(--card);color:var(--text);border-radius:20px 20px 0 0;padding:14px 16px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgba(0,0,0,.25)"></div>';
+  document.body.appendChild(o);return o}
+function closeQuickWiz(){const o=$('qw-ov');if(o)o.remove()}
+function qwHead(step,title,back){return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">${back?`<button type="button" onclick="${back}" style="border:none;background:none;color:var(--text);font-size:17px;padding:6px 8px 6px 0;cursor:pointer;font-family:inherit">‹</button>`:''}<div style="flex:1;font-size:17px;font-weight:700">${title}</div><div style="font-size:13px;opacity:.6">${step}/3</div><button type="button" onclick="closeQuickWiz()" style="border:none;background:none;color:var(--text);font-size:20px;padding:4px 2px 4px 10px;cursor:pointer;opacity:.6">×</button></div>`}
+function qwSum(){const c=qw.flow==='in'?'var(--green)':'var(--red)';return `<div style="font-size:13px;opacity:.75;margin-bottom:10px">${qw.flow==='in'?'Thu':'Chi'} <b style="color:${c}">${formatMoney(qw.amount)} đ</b>${qw.cat?' · '+esc(qw.cat):''}</div>`}
+function openQuickWiz(flow){qw={flow:flow||'out',amount:0,cat:''};qwEl();qwStep1()}
+function qwStep1(){
+  const b=$('qw-box');if(!b)return;const seg=(f,l)=>`<button type="button" onclick="qwFlow('${f}')" id="qw-f-${f}" style="flex:1;padding:11px;border-radius:10px;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">${l}</button>`;
+  b.innerHTML=qwHead(1,'Ghi nhanh')+`<div style="display:flex;gap:4px;padding:4px;background:var(--bdr);border-radius:12px;margin-bottom:14px">${seg('out','Chi')}${seg('in','Thu')}</div>
+  <input id="qw-amt" type="text" inputmode="numeric" autocomplete="off" placeholder="0" value="${qw.amount?formatMoney(qw.amount):''}" style="width:100%;box-sizing:border-box;font-size:34px;font-weight:800;text-align:right;padding:12px 14px;border:1px solid var(--bdr);border-radius:14px;background:transparent;color:inherit;font-family:inherit;outline:none">
+  <div id="qw-words" style="font-size:13px;opacity:.65;text-align:right;min-height:18px;margin:6px 2px 10px"></div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">${['000','10000','50000','100000'].map(v=>`<button type="button" onclick="qwQuick('${v}')" style="padding:9px 0;border-radius:10px;border:1px solid var(--bdr);background:transparent;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">${v==='000'?'×1.000':'+'+formatMoney(+v)}</button>`).join('')}</div>
+  <button type="button" onclick="qwNext1()" style="width:100%;padding:14px;border:none;border-radius:14px;background:var(--text);color:var(--card);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Tiếp · chọn khoản</button>`;
+  qwFlow(qw.flow);const i=$('qw-amt');
+  i.addEventListener('input',()=>{const n=parseMoney(i.value);qw.amount=n;i.value=n?formatMoney(n):'';$('qw-words').textContent=moneyWords(n)});
+  i.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();qwNext1()}});
+  $('qw-words').textContent=moneyWords(qw.amount);try{i.focus()}catch(e){}
+}
+function qwFlow(f){qw.flow=f;['out','in'].forEach(x=>{const b=$('qw-f-'+x);if(!b)return;const on=x===f;b.style.background=on?(x==='in'?'var(--green)':'var(--red)'):'transparent';b.style.color=on?'#fff':'var(--text)'})}
+function qwQuick(v){const i=$('qw-amt');let n=qw.amount||0;n=v==='000'?n*1000:n+(+v);qw.amount=n;i.value=formatMoney(n);$('qw-words').textContent=moneyWords(n);try{i.focus()}catch(e){}}
+function qwNext1(){if(!qw.amount){const i=$('qw-amt');if(i){i.style.borderColor='var(--red)';i.focus()}return}qwStep2()}
+function qwUsage(key){const cut=Date.now()-120*864e5,cnt={};(db.transactions||[]).forEach(t=>{if(t.group!=='personal'||t.flow!==qw.flow)return;const d=Date.parse(t.date);if(d&&d<cut)return;const k=key(t);if(k)cnt[k]=(cnt[k]||0)+1});return cnt}
+function qwStep2(){
+  const b=$('qw-box');if(!b)return;qw.cat='';const list=((DOMAIN_CATS.personal||{})[qw.flow]||[]).map(x=>x[0]);const cnt=qwUsage(t=>t.category);
+  const sorted=list.slice().sort((a,c)=>(cnt[c]||0)-(cnt[a]||0));
+  b.innerHTML=qwHead(2,qw.flow==='in'?'Khoản thu':'Khoản chi','qwStep1()')+qwSum()+`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${sorted.map(n=>`<button type="button" onclick="qwPickCat(this.dataset.c)" data-c="${esc(n)}" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;min-height:76px;border-radius:14px;border:1px solid var(--bdr);background:transparent;color:var(--text);font-size:13px;font-weight:600;line-height:1.25;cursor:pointer;font-family:inherit;text-wrap:balance"><span style="width:22px;height:22px;display:flex;opacity:.85">${(typeof CAT_ICONS!=='undefined'&&CAT_ICONS[n])||''}</span>${esc(n)}</button>`).join('')}</div>`;
+  try{document.activeElement&&document.activeElement.blur()}catch(e){}
+}
+function qwPickCat(c){qw.cat=c;qwStep3()}
+function qwStep3(){
+  const b=$('qw-box');if(!b)return;ensureAccounts();const cnt=qwUsage(t=>t.category===qw.cat?(t.account||'cash'):null);
+  let best=Object.keys(cnt).sort((a,c)=>cnt[c]-cnt[a])[0];if(!best||!acctById(best))best=(selAcct&&acctById(selAcct))?selAcct:mainAcctId();
+  const list=db.accounts.filter(a=>!(qw.flow==='in'&&a.type==='credit'));
+  b.innerHTML=qwHead(3,'Tài khoản','qwStep2()')+qwSum()+`<div style="display:flex;flex-direction:column;gap:8px">${list.map(a=>{const on=a.id===best;return `<button type="button" onclick="qwSave(this.dataset.a)" data-a="${esc(a.id)}" style="display:flex;align-items:center;gap:10px;min-height:52px;padding:10px 14px;border-radius:14px;border:${on?'2px solid var(--text)':'1px solid var(--bdr)'};background:transparent;color:var(--text);font-size:15px;font-weight:600;text-align:left;cursor:pointer;font-family:inherit"><span style="flex:1">${esc(a.name)}</span><span style="font-size:13px;opacity:.6;font-weight:500">${on?'Hay dùng · ':''}${ACCT_TYPES[a.type]||''}</span></button>`}).join('')}</div>`;
+}
+function qwSave(acc){
+  if(!qw.amount||!qw.cat)return;let desc='';try{desc=ftCleanDesc('',qw.cat)||''}catch(e){}
+  const t={id:Date.now(),amount:qw.amount,desc,category:qw.cat,group:'personal',flow:qw.flow,date:tdy(),note:'',account:acc};
+  db.transactions.push(t);setAcct(acc);save();closeQuickWiz();renderAll();
+  const a=acctById(acc);toastUndo('Đã ghi '+(qw.flow==='in'?'thu ':'chi ')+formatMoney(t.amount)+' đ · '+esc(qw.cat)+(a?' · '+esc(a.name):''),()=>{const i=db.transactions.findIndex(x=>x.id===t.id);if(i>=0){db.transactions.splice(i,1);save();renderAll()}});
+}
+
+Object.assign(window,{openQuickWiz,closeQuickWiz,qwStep1,qwStep2,qwFlow,qwQuick,qwNext1,qwPickCat,qwSave});
 
 /* ── Che toàn bộ số tiền ── */
 const MR=/[+\-−]?\d[\d.,]*\s?(?:đ|VND|VNĐ|tr|tỷ|K|k)(?![\p{L}])/gu;
