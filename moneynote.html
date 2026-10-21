@@ -9008,6 +9008,11 @@ html body.dark #topbar .cf-ratio i:first-child,html body.dark #topbar .cf-cell:f
 html body.dark #topbar .cf-cell b{color:var(--text)!important}
 html body.dark [style*="#8fc2f0"],html body.dark [style*="#6cb6ff"],html body.dark [style*="#7eb6e8"],html body.dark [style*="#a8c8ec"],html body.dark [style*="#2997ff"],html body.dark [style*="#0a84ff"],html body.dark [style*="#7ec8ff"],html body.dark [style*="#8fb4e0"]{color:#5BEA6E!important}
 html body.dark .tx-icon[style*="--navy"]{color:#5BEA6E!important}
+/* Ô ngày: giữ chữ gốc của iOS trong suốt, chỉ hiện lớp dd/mm/yyyy */
+html body.dark input.dfmt,html body input.dfmt{color:transparent!important;-webkit-text-fill-color:transparent!important}
+html body input.dfmt::-webkit-datetime-edit{opacity:0!important}
+html body.dark input[type="date"].form-input,html body.dark #add-modal input[type="date"]{background:var(--card)!important;border:1px solid var(--line)!important}
+html body.dark .dw-disp{color:var(--text)!important}
 </style>
 <style id="mn-no-select-arrow">select,.form-select,select.form-input{-webkit-appearance:none!important;appearance:none!important;background-image:none!important;padding-right:12px!important}select::-ms-expand{display:none}</style>
 </body>
