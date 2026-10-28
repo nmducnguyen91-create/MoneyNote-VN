@@ -2598,7 +2598,7 @@ function migrateData(){
     if(_vc){ // Sao kê VPBank kỳ 21/08–20/09/2026, hạn 05/10
       const TOTAL_DEBT=92130295, DUE=18439962, LIMIT=97500000;
       _vc.limit=LIMIT;
-      _vc.stmtOverrideKey='2026-09-20';_vc.stmtOverride=DUE;_vc.instFeeMonthly=2494190; // lãi trả góp hàng kỳ, để các kỳ sau tự tính đúng khi hết hạn override
+      _vc.stmtOverrideKey='2026-09-20';_vc.stmtOverride=DUE;_vc.instFeeMonthly=0; // lãi trả góp hàng kỳ, để các kỳ sau tự tính đúng khi hết hạn override
       try{const instRem=db.installments.filter(i=>i.card===_vc.id&&(i.paid||0)<i.term).reduce((s,i)=>s+instRemaining(i),0);
         const dbtRem=(db.debts||[]).filter(d=>d.acct===_vc.id&&d.kind!=='receivable'&&!d.settled).reduce((s,d)=>s+(+d.remaining||0),0);
         const target=Math.max(0,TOTAL_DEBT-instRem-dbtRem);
@@ -2617,6 +2617,14 @@ function migrateData(){
         const dbtRem=(db.debts||[]).filter(d=>d.acct===_mb.id&&d.kind!=='receivable'&&!d.settled).reduce((s,d)=>s+(+d.remaining||0),0);
         const target=Math.max(0,TOTAL_DEBT-instRem-dbtRem);
         _mb.opening=(_mb.opening||0)-(target-Math.max(0,-acctBalance(_mb)));}catch(e){}}
+  }
+  {ensureInst(); // Pru 3 kỳ MB: kỳ 1 sao kê 08, kỳ 3 nằm trong sao kê chốt 10/10 (hạn 25/10). Kiểm tra MỖI lần mở vì FinTrack (chung dữ liệu) có thể ghi đè lại 2026-07
+    (db.installments||[]).filter(i=>i.card==='ac_mab'&&/pru/i.test(i.name||'')&&i.term===3&&i.startStmt==='2026-07').forEach(i=>{i.startStmt='2026-08';changed=true});
+  }
+  if(!db._vpFee0){db._vpFee0=true;changed=true;ensureAccounts();ensureInst(); // VP: bỏ lãi & phí trả góp (user yêu cầu 28/10/2026)
+    (db.accounts||[]).filter(x=>x.type==='credit'&&/\bvp/i.test(x.name||'')).forEach(c=>{c.instFeeMonthly=0;
+      (db.installments||[]).filter(i=>i.card===c.id).forEach(i=>{i.feeMode='none';i.fee=0;i.rateMode='none';i.rate=0});
+      (db.debts||[]).filter(d=>d.acct===c.id).forEach(d=>{if(d.feeMode||d.rateMode){d.feeMode='none';d.fee=0;d.rateMode='none';d.rate=0}});});
   }
   if(!db._ccDemo2){db._ccDemo2=true;changed=true;ensureAccounts();
     if(!db.accounts.some(a=>a.id==='ac_mab'))db.accounts.push({id:'ac_mab',name:'Thẻ MB Bank',type:'credit',opening:0,limit:100000000,stDay:15,dueDay:28,demo:true});
@@ -5458,7 +5466,7 @@ function renderAcctReport(){
       const kyOf=d=>{if(d.term)return' <span style="font-size:13px">('+(d.paid||0)+'/'+d.term+' kỳ)</span>';const pmt=+d.monthlyPayment||0;if(pmt>0){const left=Math.ceil((+d.remaining||0)/pmt);return' <span style="font-size:13px">(còn '+left+' kỳ)</span>'}return''};
       extra+=`<div style="margin-top:8px;border-top:1px dashed var(--bdr);padding-top:7px;font-size:13px;line-height:1.8">
         ${cr&&val>0?`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Dư nợ chi tiêu (sao kê + kỳ mới)</span><b style="color:var(--red)">${fmtK(val)} đ</b></div>`:''}
-        ${lkInst.map(i=>`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Trả góp · ${i.name} <span style="font-size:13px">(${i.paid||0}/${i.term} kỳ)</span></span><b style="color:var(--red)">${fmtK(instRemNow(i,CI.closeStr))} đ</b></div>`).join('')}
+        ${lkInst.filter(i=>instRemNow(i,CI.closeStr)>0||(CI.stmt>0&&instInStmt(i,CI.closeStr)>0)).map(i=>`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Trả góp · ${i.name} <span style="font-size:13px">(${i.paid||0}/${i.term} kỳ)</span></span><b style="color:var(--red)">${fmtK(instRemNow(i,CI.closeStr)+(CI.stmt>0?instInStmt(i,CI.closeStr):0))} đ</b></div>`).join('')}
         ${lk.map(d=>`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Nợ · ${d.name}${kyOf(d)}</span><b style="color:var(--red)">${fmtK(d.remaining)} đ</b></div>`).join('')}
         ${cr&&totDebt>0&&(val>0?1:0)+lk.length+lkInst.length>1?`<div style="display:flex;justify-content:space-between"><b>Tổng nợ hiện tại</b><b style="color:var(--red)">${fmtK(totDebt)} đ</b></div>`:''}
       </div>`;
@@ -5467,7 +5475,7 @@ function renderAcctReport(){
       const _x=stmtSplit(a),_s=_x.s;const due=nextDueDate(a);
       const pay=_x.pay,inst=_x.inst,spend=_x.spend,_fee=_x.fee;
       extra+=`<div style="margin-top:8px;background:var(--light);border-radius:10px;padding:9px 12px">
-        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:15px;font-weight:700">Phải trả kỳ này <span style="font-weight:500;color:var(--muted);font-size:13px">(sao kê chốt ${_s.closeStr.slice(8,10)}/${_s.closeStr.slice(5,7)})</span></span><b style="font-size:15px;color:${pay?'var(--red)':'var(--green,var(--green))'}">${pay?formatMoney(pay)+' đ':(_s.paidSince?'Đã trả đủ':'0 đ')}</b></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:15px;font-weight:700;min-width:0">Phải trả kỳ này <span style="font-weight:500;color:var(--muted);font-size:13px">(sao kê chốt ${_s.closeStr.slice(8,10)}/${_s.closeStr.slice(5,7)})</span></span><b style="font-size:15px;white-space:nowrap;flex-shrink:0;color:${pay?'var(--red)':'var(--green,var(--green))'}">${pay?formatMoney(pay)+' đ':(_s.paidSince?'Đã trả đủ':'0 đ')}</b></div>
         <div style="font-size:13px;color:var(--muted);margin-top:4px;line-height:1.7">
           ${stmtParts(_x).map(r=>`<div style="display:flex;justify-content:space-between"><span>${r[0]}</span><b>${fmtK(r[1])} đ</b></div>`).join('')}
           ${due?`<div style="display:flex;justify-content:space-between"><span>Hạn thanh toán</span><b>${String(due.getDate()).padStart(2,'0')}/${String(due.getMonth()+1).padStart(2,'0')}</b></div>`:''}
@@ -9015,5 +9023,18 @@ html body.dark input[type="date"].form-input,html body.dark #add-modal input[typ
 html body.dark .dw-disp{color:var(--text)!important}
 </style>
 <style id="mn-no-select-arrow">select,.form-select,select.form-input{-webkit-appearance:none!important;appearance:none!important;background-image:none!important;padding-right:12px!important}select::-ms-expand{display:none}</style>
+<script id="mn-no-dong">
+/* Số tiền viết gọn (K/tr/tỷ) + bỏ "đ" ở danh sách/thẻ/sao kê; giữ ở số dư đầu trang, ô nhập, máy tính, Ghi nhanh. Chỉ đổi phần hiển thị — dữ liệu, file xuất, tin nhắn chia sẻ không đổi. */
+(function(){
+  var RE=/([\d)]|tr|tỷ|K)\s*đ(?![\p{L}\d])/gu,KEEP='.topbar-balance,#top-balance,#calc-overlay,#qw-ov,input,textarea,select,option,script,style,[data-keep-dong]';
+  function keep(n){var e=n.parentElement;return !e||(e.closest&&e.closest(KEEP))}
+  var NUM=/(^|[^\d.,\/])(\d{1,3}(?:\.\d{3})+)(?![\d.,\/])/g;
+  function sh(s){var n=+s.replace(/\./g,''),a=Math.abs(n);if(a>=1e9)return(n/1e9).toFixed(1)+'tỷ';if(a>=1e6)return(n/1e6).toFixed(1)+'tr';if(a>=1e3)return Math.round(n/1e3)+'K';return s}
+  function fixText(n){var v=n.nodeValue;if(!v||keep(n))return;var w=v;if(/\d\.\d{3}/.test(w))w=w.replace(NUM,function(m,p,s){return p+sh(s)});if(w.indexOf('đ')>-1)w=w.replace(RE,'$1');if(w!==v)n.nodeValue=w}
+  function walk(root){if(root.nodeType===3){fixText(root);return}if(root.nodeType!==1||(root.closest&&root.closest(KEEP)))return;var t=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),n;while(n=t.nextNode())fixText(n)}
+  function start(){walk(document.body);new MutationObserver(function(ms){for(var i=0;i<ms.length;i++){var m=ms[i];if(m.type==='characterData')fixText(m.target);else for(var j=0;j<m.addedNodes.length;j++)walk(m.addedNodes[j])}}).observe(document.body,{childList:true,subtree:true,characterData:true})}
+  if(document.body)start();else document.addEventListener('DOMContentLoaded',start);
+})();
+</script>
 </body>
 </html>
