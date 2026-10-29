@@ -58,7 +58,7 @@ function fmtK(n){n=+n||0;const a=Math.abs(n),g=(v,d)=>String(+v.toFixed(d));if(a
 const fmt=n=>fmtK(n);
 ```
 - Mọi số trong danh sách/thẻ/sao kê: `fmtK`, **không "đ"** (3.54tr, 8tr, 97.2K, 1.2tỷ). Bỏ mọi `+' đ'` / `} đ` sau fmtK.
-- `fmtFull` (đầy đủ + "đ") chỉ cho: số dư đầu trang, "Phải trả kỳ này", "Tổng nợ hiện tại", Ghi nhanh. `formatMoney` (đầy đủ, không "đ") cho ô nhập & xem trước trong form.
+- **Mọi số tiền hiển thị đều dùng `fmtK`**, RIÊNG số dư đầu trang dùng `fmtFull` (44.910.478 đ) — "Phải trả kỳ này", "Tổng nợ hiện tại", Ghi nhanh, hộp thoại, xem trước trong form (cập nhật 29/10/2026). `formatMoney` (đầy đủ) chỉ cho giá trị trong ô nhập & máy tính. `fmtFull` giữ trong lõi nhưng không dùng để hiển thị.
 
 **b) Chi tiết nợ thẻ — dòng "Trả góp · tên (x/y kỳ)"**: hiện đến khi sao kê chứa kỳ cuối đã trả xong. Số = gốc chưa lên sao kê + kỳ trong sao kê đã chốt (nếu sao kê chưa trả xong). Tổng nợ giữ nguyên `cardDebtInfo().total`.
 ```js

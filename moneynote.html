@@ -4119,7 +4119,7 @@ function setDebtMode(m){debtMode=m;const on=(id,a)=>{const b=document.getElement
  const r=debtKind==='receivable';const sl=document.getElementById('d-start-label');if(sl)sl.textContent=m==='flex'?(r?'Ngày cho mượn':'Ngày mượn'):'Ngày bắt đầu';
  const hn=document.getElementById('dm-hint');if(hn)hn.textContent=m==='flex'?(r?'Người thân, bạn bè mượn — không lãi, trả lúc nào ghi lúc đó.':'Mượn người thân, bạn bè — không lãi, trả dần bao nhiêu ghi bấy nhiêu.'):'Vay ngân hàng, trả góp — có số kỳ, tiền mỗi kỳ và lãi suất.'}
 function payDebtPart(i){const d=db.debts[i];if(!d)return;const r=d.kind==='receivable';const rem=+d.remaining||0;
- const v=prompt((r?'Số tiền đã thu':'Số tiền đã trả')+' (còn '+formatMoney(rem)+' đ):',String(rem));if(v==null)return;const amt=Math.min(rem,Math.round(+String(v).replace(/[^\d]/g,'')||0));if(!amt){toast('Chưa nhập số tiền');return}
+ const v=prompt((r?'Số tiền đã thu':'Số tiền đã trả')+' (còn '+fmtK(rem)+'):',String(rem));if(v==null)return;const amt=Math.min(rem,Math.round(+String(v).replace(/[^\d]/g,'')||0));if(!amt){toast('Chưa nhập số tiền');return}
  d.remaining=rem-amt;d.lastPayDate=today();if(!d.remaining){d.settled=true;d.settleDate=today();d.settleAmount=amt}
  db.transactions.push({id:Date.now(),amount:amt,desc:(r?'Thu nợ · ':'Trả nợ · ')+(d.name||'Khoản nợ')+(d.party?' ('+d.party+')':''),category:'Trả nợ',group:'personal',flow:r?'in':'out',date:today(),account:(()=>{const a=d.acct?acctById(d.acct):null;return (a&&a.type!=='credit')?a.id:'cash'})()});
  save();renderAll();renderDebts();toast(d.remaining?(r?'Đã ghi thu ':'Đã ghi trả ')+fmtK(amt)+' · còn '+fmtK(d.remaining):(r?'Đã thu đủ ✓':'Đã trả xong ✓'))}
@@ -4163,9 +4163,9 @@ function openDebtForm(idx){
 function debtFeeSync(){const g=id=>document.getElementById(id);if(!g('d-feemode'))return;const m=g('d-feemode').value;g('d-fee-wrap').style.visibility=m==='none'?'hidden':'';g('d-fee-label').textContent=m==='fixed'?'Phí mỗi kỳ (đ)':'Tổng phí (đ)';
   const pv=g('d-fee-preview');const fee=m==='none'?0:getMoneyVal('d-fee');const d={feeMode:m,fee,term:+g('d-term').value||0,paid:+g('d-paid').value||0,monthlyPayment:getMoneyVal('d-monthly'),remaining:getMoneyVal('d-remaining')||getMoneyVal('d-principal')};
   if(!fee){pv.textContent='';return}const n=debtTermOf(d);const per=d.monthlyPayment;
-  if(m==='once'){pv.innerHTML='Kỳ 1: <b style="color:var(--text)">'+formatMoney(per+fee)+' đ</b> · các kỳ sau '+fmtK(per);return}
+  if(m==='once'){pv.innerHTML='Kỳ 1: <b style="color:var(--text)">'+fmtK(per+fee)+'</b> · các kỳ sau '+fmtK(per);return}
   if(!n){pv.textContent='Nhập số kỳ hoặc số trả mỗi kỳ để tính phí từng kỳ';return}
-  const e0=debtFeeAt(d,0);let tot=0;for(let k=0;k<n;k++)tot+=debtFeeAt(d,k);pv.innerHTML='Mỗi kỳ trả <b style="color:var(--text)">'+formatMoney(per+e0)+' đ</b> (gồm phí '+formatMoney(e0)+' đ) · tổng phí '+formatMoney(tot)+' đ / '+n+' kỳ'}
+  const e0=debtFeeAt(d,0);let tot=0;for(let k=0;k<n;k++)tot+=debtFeeAt(d,k);pv.innerHTML='Mỗi kỳ trả <b style="color:var(--text)">'+fmtK(per+e0)+'</b> (gồm phí '+fmtK(e0)+') · tổng phí '+fmtK(tot)+' / '+n+' kỳ'}
 function closeDebtForm(){document.getElementById('debt-modal').classList.remove('open');editDebtIdx=null}
 function saveDebt(){
   const name=document.getElementById('d-name').value.trim();if(!name){warnField('d-name','Nhập tên khoản nợ');return}
@@ -4229,7 +4229,7 @@ function confirmSettle(){
     const it=(db.installments||[]).find(x=>x.id===settleInstId);if(!it)return;
     const amt=getMoneyVal('s-amount');
     if(!amt){warnField('s-amount','Nhập số tiền tất toán');return}
-    if(!confirm('Tất toán "'+it.name+'"?\n\nCòn lại '+formatMoney(instRemaining(it))+' đ ('+(it.term-(it.paid||0))+' kỳ).\nSố tiền tất toán: '+formatMoney(amt+getMoneyVal('s-fee'))+' đ.'))return;
+    if(!confirm('Tất toán "'+it.name+'"?\n\nCòn lại '+fmtK(instRemaining(it))+' ('+(it.term-(it.paid||0))+' kỳ).\nSố tiền tất toán: '+fmtK(amt+getMoneyVal('s-fee'))+'.'))return;
     it.settled=true;it.settleAmount=amt;it.settleFee=getMoneyVal('s-fee');
     it.settleDate=document.getElementById('s-date').value||today();
     it.paid=it.term;
@@ -5052,7 +5052,7 @@ function setTxType(type){txType=type;
   if(type==='income'||type==='expense')populateCatSelect(modalDomain,type==='income'?'in':'out');
   const _tr=document.getElementById('trip-row');if(_tr)_tr.style.display=(type==='income'||type==='expense')?'':'none';
   updateAcctUI();suggestAcct();}
-function openEditTx(id){{const _t=(db.transactions||[]).find(x=>String(x.id)===String(id));if(_t&&_t.debtPay){if(confirm((_t.to?'Thu nợ':'Trả nợ')+' · '+(_t.ext||'')+' · '+formatMoney(_t.amount)+' đ\n\nKhoản này là chuyển tiền trả/thu nợ (không tính chi tiêu). Xoá giao dịch này?'))deleteTxById(id);return}}
+function openEditTx(id){{const _t=(db.transactions||[]).find(x=>String(x.id)===String(id));if(_t&&_t.debtPay){if(confirm((_t.to?'Thu nợ':'Trả nợ')+' · '+(_t.ext||'')+' · '+fmtK(_t.amount)+'\n\nKhoản này là chuyển tiền trả/thu nợ (không tính chi tiêu). Xoá giao dịch này?'))deleteTxById(id);return}}
   const t=db.transactions.find(x=>String(x.id)===String(id));if(!t)return;
   editTxId=t.id;editAssetId=null;editTradeId=null;catManual=true;
   modalDomain=t.group;
@@ -5325,7 +5325,7 @@ function renderAcctReport(){
     <div style="height:8px;background:var(--light);border-radius:4px;margin-top:7px;overflow:hidden"><div style="height:100%;width:${Math.min(100,_pct)}%;border-radius:4px;background:${_pct>70?'var(--red)':_pct>50?'#e67e22':'var(--navy)'}"></div></div>
     <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-top:12px">
       <div style="background:var(--light);border-radius:12px;padding:10px 12px;min-width:0"><div style="font-size:13px;color:var(--muted)">Còn dùng được</div><div style="font-size:20px;font-weight:800;color:var(--green);margin-top:2px;white-space:nowrap;font-variant-numeric:tabular-nums">${fmtK(_ccAvail)}</div></div>
-      <div style="background:var(--light);border-radius:12px;padding:10px 12px;min-width:0"><div style="font-size:13px;color:var(--muted)">Phải trả kỳ này</div><div style="font-size:20px;font-weight:800;color:${_ccStmt?'var(--red)':'var(--muted)'};margin-top:2px;white-space:nowrap;font-variant-numeric:tabular-nums">${fmtFull(_ccStmt)}</div><div style="font-size:13px;color:${_ddays!=null&&_ddays<=3?'var(--red)':'var(--muted)'};margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_nd?'Hạn '+String(_nd.d.getDate()).padStart(2,'0')+'/'+String(_nd.d.getMonth()+1).padStart(2,'0')+(_ddays!=null?' · còn '+Math.max(0,_ddays)+' ngày':''):'Không có hạn sắp tới'}</div></div>
+      <div style="background:var(--light);border-radius:12px;padding:10px 12px;min-width:0"><div style="font-size:13px;color:var(--muted)">Phải trả kỳ này</div><div style="font-size:20px;font-weight:800;color:${_ccStmt?'var(--red)':'var(--muted)'};margin-top:2px;white-space:nowrap;font-variant-numeric:tabular-nums">${fmtK(_ccStmt)}</div><div style="font-size:13px;color:${_ddays!=null&&_ddays<=3?'var(--red)':'var(--muted)'};margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_nd?'Hạn '+String(_nd.d.getDate()).padStart(2,'0')+'/'+String(_nd.d.getMonth()+1).padStart(2,'0')+(_ddays!=null?' · còn '+Math.max(0,_ddays)+' ngày':''):'Không có hạn sắp tới'}</div></div>
     </div>
     ${_dues.length?'<div style="margin-top:12px;border-top:1px solid var(--bdr);padding-top:9px;font-size:13px;line-height:1.9"><div style="font-size:13px;color:var(--muted);margin-bottom:2px">Sắp đến hạn</div>'+_dues.slice(0,4).map(x=>{const dd=Math.ceil((x.d-new Date(new Date().toDateString()))/864e5);const urg=dd<=3;return '<div style="display:flex;justify-content:space-between;gap:8px"><span style="color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+x.a.name+' · '+String(x.d.getDate()).padStart(2,'0')+'/'+String(x.d.getMonth()+1).padStart(2,'0')+(urg?' <b style="color:var(--red)">('+(dd<=0?'hôm nay':'còn '+dd+'n')+')</b>':'')+'</span><b style="color:var(--red);white-space:nowrap">'+fmtK(x.st)+'</b></div>'+((x.x.inst||x.x.fee)?'<div style="display:flex;flex-direction:column;gap:1px;margin:0 0 6px 10px;line-height:1.5">'+[['Chi tiêu đã chốt',x.x.spend],['Trả góp',x.x.inst],['Lãi & phí trả góp',x.x.fee]].filter(r=>r[1]).map(r=>'<div style="display:flex;justify-content:space-between;gap:10px;color:var(--muted)"><span>'+r[0]+'</span><span style="font-variant-numeric:tabular-nums;white-space:nowrap">'+fmtK(r[1])+'</span></div>').join('')+'</div>':'')}).join('')+'</div>':''}
   </div>`:'');
@@ -5346,14 +5346,14 @@ function renderAcctReport(){
         ${cr&&val>0?`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Dư nợ chi tiêu (sao kê + kỳ mới)</span><b style="color:var(--red)">${fmtK(val)}</b></div>`:''}
         ${lkInst.filter(i=>instRemNow(i,CI.closeStr)>0||(CI.stmt>0&&instInStmt(i,CI.closeStr)>0)).map(i=>`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Trả góp · ${i.name} <span style="font-size:13px">(${i.paid||0}/${i.term} kỳ)</span></span><b style="color:var(--red)">${fmtK(instRemNow(i,CI.closeStr)+(CI.stmt>0?instInStmt(i,CI.closeStr):0))}</b></div>`).join('')}
         ${lk.map(d=>`<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Nợ · ${d.name}${kyOf(d)}</span><b style="color:var(--red)">${fmtK(d.remaining)}</b></div>`).join('')}
-        ${cr&&totDebt>0&&(val>0?1:0)+lk.length+lkInst.length>1?`<div style="display:flex;justify-content:space-between"><b>Tổng nợ hiện tại</b><b style="color:var(--red)">${fmtFull(totDebt)}</b></div>`:''}
+        ${cr&&totDebt>0&&(val>0?1:0)+lk.length+lkInst.length>1?`<div style="display:flex;justify-content:space-between"><b>Tổng nợ hiện tại</b><b style="color:var(--red)">${fmtK(totDebt)}</b></div>`:''}
       </div>`;
     }
     if(cr){
       const _x=stmtSplit(a),_s=_x.s;const due=nextDueDate(a);
       const pay=_x.pay,inst=_x.inst,spend=_x.spend,_fee=_x.fee;
       extra+=`<div style="margin-top:8px;background:var(--light);border-radius:10px;padding:9px 12px">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:15px;font-weight:700;min-width:0">Phải trả kỳ này <span style="font-weight:500;color:var(--muted);font-size:13px">(sao kê chốt ${_s.closeStr.slice(8,10)}/${_s.closeStr.slice(5,7)})</span></span><b style="font-size:15px;white-space:nowrap;flex-shrink:0;color:${pay?'var(--red)':'var(--green,var(--green))'}">${pay?fmtFull(pay):(_s.paidSince?'Đã trả đủ':'0')}</b></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span style="font-size:15px;font-weight:700;min-width:0">Phải trả kỳ này <span style="font-weight:500;color:var(--muted);font-size:13px">(sao kê chốt ${_s.closeStr.slice(8,10)}/${_s.closeStr.slice(5,7)})</span></span><b style="font-size:15px;white-space:nowrap;flex-shrink:0;color:${pay?'var(--red)':'var(--green,var(--green))'}">${pay?fmtK(pay):(_s.paidSince?'Đã trả đủ':'0')}</b></div>
         <div style="font-size:13px;color:var(--muted);margin-top:4px;line-height:1.7">
           ${stmtParts(_x).map(r=>`<div style="display:flex;justify-content:space-between"><span>${r[0]}</span><b>${fmtK(r[1])}</b></div>`).join('')}
           ${due?`<div style="display:flex;justify-content:space-between"><span>Hạn thanh toán</span><b>${String(due.getDate()).padStart(2,'0')}/${String(due.getMonth()+1).padStart(2,'0')}</b></div>`:''}
@@ -5385,7 +5385,7 @@ function renderAcctReport(){
         </div>
         <div style="text-align:right">
           <div style="font-size:13px;color:var(--muted)">${cr?'Tổng nợ hiện tại':'Số dư'}</div>
-          <div style="font-size:17px;font-weight:800;color:${cr?(totDebt>0?'var(--red)':'var(--muted)'):color}">${cr?fmtFull(totDebt):(val<0?'−':'')+fmtK(Math.abs(val))}</div>
+          <div style="font-size:17px;font-weight:800;color:${cr?(totDebt>0?'var(--red)':'var(--muted)'):color}">${cr?fmtK(totDebt):(val<0?'−':'')+fmtK(Math.abs(val))}</div>
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-top:8px">
@@ -5482,9 +5482,9 @@ function instFormSync(){const g=id=>document.getElementById(id);if(!g('in-feemod
   g('in-fee-wrap').style.visibility=x.feeMode==='none'?'hidden':'';g('in-rate-wrap').style.visibility=x.rateMode==='none'?'hidden':'';
   const pv=g('in-preview');if(!x.term||!x.per){pv.textContent='';return}
   const it={total:x.total,term:x.term,per:x.per,feeMode:x.feeMode,fee:x.fee,rateMode:x.rateMode,rate:x.rate};const e0=instExtraAt(it,0),e1=x.term>1?instExtraAt(it,1):e0,eL=instExtraAt(it,x.term-1),ex=instExtraTotal(it);
-  if(!ex){pv.innerHTML='Mỗi kỳ trả <b style="color:var(--text)">'+formatMoney(x.per)+' đ</b> · không phí, không lãi';return}
-  let s='Kỳ 1: <b style="color:var(--text)">'+formatMoney(x.per+e0)+' đ</b>';if(x.term>1)s+=' · kỳ 2'+(e1!==eL?'':' trở đi')+': <b style="color:var(--text)">'+formatMoney(x.per+e1)+' đ</b>';if(x.term>2&&e1!==eL)s+=' … kỳ '+x.term+': <b style="color:var(--text)">'+formatMoney(x.per+eL)+' đ</b>';
-  s+='<br>Tổng phí + lãi: <b style="color:var(--text)">'+formatMoney(ex)+' đ</b>'+(x.total?' ('+(ex/x.total*100).toFixed(2).replace('.',',')+'% gốc)':'')+' · tổng phải trả '+fmtK(x.per*x.term+ex);pv.innerHTML=s}
+  if(!ex){pv.innerHTML='Mỗi kỳ trả <b style="color:var(--text)">'+fmtK(x.per)+'</b> · không phí, không lãi';return}
+  let s='Kỳ 1: <b style="color:var(--text)">'+fmtK(x.per+e0)+'</b>';if(x.term>1)s+=' · kỳ 2'+(e1!==eL?'':' trở đi')+': <b style="color:var(--text)">'+fmtK(x.per+e1)+'</b>';if(x.term>2&&e1!==eL)s+=' … kỳ '+x.term+': <b style="color:var(--text)">'+fmtK(x.per+eL)+'</b>';
+  s+='<br>Tổng phí + lãi: <b style="color:var(--text)">'+fmtK(ex)+'</b>'+(x.total?' ('+(ex/x.total*100).toFixed(2).replace('.',',')+'% gốc)':'')+' · tổng phải trả '+fmtK(x.per*x.term+ex);pv.innerHTML=s}
 function instAutoCalc(){const total=getMoneyVal('in-total'),term=+document.getElementById('in-term').value;if(total&&term&&!getMoneyVal('in-per'))setMoneyVal('in-per',Math.round(total/term));try{instFormSync()}catch(e){}}
 function closeInstModal(){document.getElementById('inst-modal').classList.remove('open');editInstId=null}
 function saveInst(){ensureInst();
@@ -7148,7 +7148,7 @@ window.qxSave=function(k){
   if(it.kind==='xfer'){
     if(!it.from||!it.to||it.from===it.to){toast('Chọn 2 tài khoản khác nhau');return}
     if(isCr(it.from)&&!confirm('Dùng thẻ tín dụng '+acctOf(it.from).name+' để '+(isCr(it.to)?'trả thẻ '+acctOf(it.to).name:'chuyển tiền')+' là RÚT TIỀN MẶT từ thẻ: thường mất phí 2–4% và bị tính lãi ngay từ ngày rút.\n\nVẫn ghi?'))return;
-    if(isCr(it.from)&&!confirm('XÁC NHẬN LẦN 2\n\nRút '+formatMoney(it.amount)+' đ tiền mặt từ '+acctOf(it.from).name+'.\nPhí rút tiền mặt: '+formatMoney(+it.fee||0)+' đ (sẽ ghi thành khoản chi riêng).\n\nĐồng ý?'))return;
+    if(isCr(it.from)&&!confirm('XÁC NHẬN LẦN 2\n\nRút '+fmtK(it.amount)+' tiền mặt từ '+acctOf(it.from).name+'.\nPhí rút tiền mặt: '+fmtK(+it.fee||0)+' (sẽ ghi thành khoản chi riêng).\n\nĐồng ý?'))return;
     db.transactions.push({id,amount:it.amount,desc:it.desc,category:'Chuyển khoản',group:'personal',flow:'xfer',date:it.date,note:'',from:it.from,to:it.to});
     const fid=id+0.3;if(isCr(it.from)&&+it.fee>0)db.transactions.push({id:fid,amount:+it.fee,desc:'Phí rút tiền mặt · '+acctOf(it.from).name,category:catNames('out').includes('Phí ngân hàng')?'Phí ngân hàng':'Khác',group:'personal',flow:'out',date:it.date,note:'',account:it.from});
     undo=()=>{rmTx();const j=db.transactions.findIndex(t=>t.id===fid);if(j>=0)db.transactions.splice(j,1)};msg='Đã ghi '+it.desc.toLowerCase()+' ✓';after=()=>{try{maybeAdvanceInst(it.to,it.date,it.amount)}catch(e){}};
@@ -7709,7 +7709,7 @@ function smsSplit(t){
 let items={},seq=0;
 function acctName(id){const a=accts().find(x=>x.id===id);return a?a.name:'—'}
 function dLabel(d){const t=tdy();if(d===t)return 'Hôm nay';const y=new Date();y.setDate(y.getDate()-1);if(d===iso(y))return 'Hôm qua';const p=d.split('-');return p[2]+'/'+p[1]+(p[0]!=String(new Date().getFullYear())?'/'+p[0]:'')}
-function money(n){try{return fmtFull(n)}catch(e){return n+' đ'}}
+function money(n){try{return fmtK(n)}catch(e){return String(n)}}
 function injectStyle(){
   if($('qa-style'))return;
   const st=document.createElement('style');st.id='qa-style';st.textContent=`
@@ -8010,8 +8010,8 @@ window.qaSave=function(k){
 };
 window.qaSaveAll=function(list,btn){const ks=list.split(',').filter(k=>items[k]&&!items[k].saved);if(btn&&btn.parentElement)btn.parentElement.remove();ks.forEach(k=>qaSave(+k))};
 window.qaUndo=function(k){const it=items[k];if(!it||!it.saved)return;const i=db.transactions.findIndex(t=>t.id===it.saved);if(i>=0)db.transactions.splice(i,1);it.saved=0;try{save();renderAll()}catch(e){}redraw(k)};
-{const _u=window.qaUndo;window.qaUndo=function(k){const it=items[k];if(it&&it.saved&&!confirm('Hoàn tác khoản này?\n\n'+(it.flow==='in'?'+':'−')+formatMoney(it.amount)+' đ · '+(it.desc||it.category||'')+' · '+dmy(it.date)+'\n\nKhoản sẽ bị xoá khỏi sổ.'))return;_u(k)};
- const _x=window.qxUndo;window.qxUndo=function(k){const it=X[k];if(it&&it.saved&&!confirm('Hoàn tác?\n\n'+(it.desc||it.name||it.kind)+' · '+formatMoney(it.amount||0)+' đ\n\nThao tác vừa lưu sẽ bị huỷ.'))return;_x(k)}}
+{const _u=window.qaUndo;window.qaUndo=function(k){const it=items[k];if(it&&it.saved&&!confirm('Hoàn tác khoản này?\n\n'+(it.flow==='in'?'+':'−')+fmtK(it.amount)+' · '+(it.desc||it.category||'')+' · '+dmy(it.date)+'\n\nKhoản sẽ bị xoá khỏi sổ.'))return;_u(k)};
+ const _x=window.qxUndo;window.qxUndo=function(k){const it=X[k];if(it&&it.saved&&!confirm('Hoàn tác?\n\n'+(it.desc||it.name||it.kind)+' · '+fmtK(it.amount||0)+'\n\nThao tác vừa lưu sẽ bị huỷ.'))return;_x(k)}}
 window.qaEdit=function(k){
   const it=items[k];if(!it)return;closeQaChat();
   prefillAdd(it);qaDrop(k);
@@ -8120,7 +8120,7 @@ function qwSave(acc){
   if(!qw.amount||!qw.cat)return;let desc='';try{desc=ftCleanDesc('',qw.cat)||''}catch(e){}
   const t={id:Date.now(),amount:qw.amount,desc,category:qw.cat,group:'personal',flow:qw.flow,date:tdy(),note:'',account:acc};
   db.transactions.push(t);setAcct(acc);save();closeQuickWiz();renderAll();
-  const a=acctById(acc);toastUndo('Đã ghi '+(qw.flow==='in'?'thu ':'chi ')+formatMoney(t.amount)+' đ · '+esc(qw.cat)+(a?' · '+esc(a.name):''),()=>{const i=db.transactions.findIndex(x=>x.id===t.id);if(i>=0){db.transactions.splice(i,1);save();renderAll()}});
+  const a=acctById(acc);toastUndo('Đã ghi '+(qw.flow==='in'?'thu ':'chi ')+fmtK(t.amount)+' · '+esc(qw.cat)+(a?' · '+esc(a.name):''),()=>{const i=db.transactions.findIndex(x=>x.id===t.id);if(i>=0){db.transactions.splice(i,1);save();renderAll()}});
 }
 
 Object.assign(window,{openQuickWiz,closeQuickWiz,qwStep1,qwStep2,qwFlow,qwQuick,qwNext1,qwPickCat,qwSave});
