@@ -2421,7 +2421,7 @@ if(typeof Chart==='undefined'){(function(){
     </div>
   </div>
 </div>
-<script src="moneynote-core.js?v=43"></script>
+<script src="moneynote-core.js?v=44"></script>
 <script>
 function escH(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 // ── CỜ BẬT/TẮT TÍNH NĂNG ──
@@ -3315,7 +3315,7 @@ function ahApplySubs(){
     AH_SUBS[scr].forEach(([sub])=>{
       const k='sub_'+scr+'_'+sub,btn=ahSubBtn(scr,sub);if(!btn)return;
       const mv=man[k];const auto=cfg.on&&!p[k]&&(u[k]||0)>0&&(now-(u[k]||0))>cfg.days*864e5;
-      let hid=mv===1?true:mv===0?false:auto;
+      let hid=mv===1?true:mv===0?false:auto;if(scr==='settings'&&sub==='export')hid=false; /* Dữ liệu chứa công tắc ẩn/hiện → luôn hiện */
       btn.style.display=hid?'none':'';btn.classList.toggle('ah-off',hid);
       if(!hid&&!firstVisible)firstVisible=btn;
       if(hid&&btn.classList.contains('active'))activeHidden=true;
@@ -4556,7 +4556,7 @@ function initPullRefresh(){
 }
 
 // ── PERSONAL ──
-function switchPersonalTab(el,tab){setTimeout(()=>{try{ftNavSync()}catch(e){}},0);try{ahTouch('sub_personal_'+tab)}catch(e){}document.querySelectorAll('#screen-personal .tab-item').forEach(t=>t.classList.remove('active'));el.classList.add('active');personalSubTab=tab;if(tab==='account')try{renderAcctReport()}catch(e){};['daily','account','debt','stats','trip'].forEach(t=>document.getElementById('personal-'+t).style.display=t===tab?'':'none');renderPersonal()}
+function switchPersonalTab(el,tab){setTimeout(()=>{try{ftNavSync()}catch(e){}},0);try{ahTouch('sub_personal_'+tab)}catch(e){}document.querySelectorAll('#screen-personal .tab-item').forEach(t=>t.classList.remove('active'));el.classList.add('active');personalSubTab=tab;if(tab==='account')try{renderAcctReport()}catch(e){};if(tab==='cashback')try{renderCashback()}catch(e){};['daily','account','debt','stats','trip','cashback'].forEach(t=>{const el=document.getElementById('personal-'+t);if(el)el.style.display=t===tab?'':'none'});renderPersonal()}
 function filterPersonal(el,cat){document.querySelectorAll('#personal-daily .chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');personalFilter=cat;renderPersonal()}
 function filterPersonalSel(cat){personalFilter=cat;renderPersonal()}
 function renderPersonal(){
@@ -5184,7 +5184,7 @@ function ensureAccounts(){if(!db.accounts||!db.accounts.length)db.accounts=[{id:
 function acctById(id){ensureAccounts();return db.accounts.find(a=>a.id===id)}
 function mainAcctId(){ensureAccounts();const m=db.accounts.find(a=>a.main&&a.type!=='credit');return(m||db.accounts[0]).id}
 function renderAcctChips(){ensureAccounts();const el=document.getElementById('f-acct');if(!el)return;if(!selAcct||!acctById(selAcct))selAcct=mainAcctId();
-  el.innerHTML=db.accounts.map(a=>`<option value="${a.id}"${a.id===selAcct?' selected':''}>${a.name}${a.type==='credit'?' (thẻ TD)':''}</option>`).join('')}
+  el.innerHTML=db.accounts.map(a=>`<option value="${a.id}"${a.id===selAcct?' selected':''}>${a.name}</option>`).join('')}
 function setAcct(id){selAcct=id;try{localStorage.setItem('lastAcct',id)}catch(e){}}
 function populateXferSelects(){ensureAccounts();const f=document.getElementById('f-from'),t=document.getElementById('f-to');if(!f||!t)return;const opts=db.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');const pf=f.value,pt=t.value;f.innerHTML=opts;t.innerHTML=opts;f.value=(pf&&acctById(pf))?pf:((selAcct&&acctById(selAcct))?selAcct:mainAcctId());const other=db.accounts.find(a=>a.id!==f.value);t.value=(pt&&pt!==f.value&&acctById(pt))?pt:(other?other.id:f.value)}
 // Ngày chốt sao kê thực tế của tháng (y,m): ngày 29–31 tự lùi về ngày cuối tháng ngắn
@@ -8733,6 +8733,7 @@ window.mnuReport=()=>report().txt;
  const f=window.ftNavSub;if(typeof f==='function'&&!f.__mg){const w=function(s){const r=f.apply(this,arguments);if(s==='account'){try{renderAcctList();renderInstList()}catch(e){}}return r};w.__mg=1;w.__mnu=f.__mnu;window.ftNavSub=w}
  try{renderAcctList();renderInstList()}catch(e){}}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();setTimeout(go,500)})();</script>
+<script src="moneynote-cashback.js?v=13"></script>
 <script>/* Tự kiểm tra bản mới khi mở/quay lại app (app màn hình chính iOS không tự tải lại) */(function(){if(!('serviceWorker' in navigator))return;let busy=0,last=0,rl=0;
 navigator.serviceWorker.addEventListener('controllerchange',()=>{if(rl)return;rl=1;location.reload()});
 async function chk(){const now=Date.now();if(busy||now-last<20000||!navigator.onLine)return;busy=1;last=now;try{const base=location.pathname.replace(/[^/]*$/,'');const t=await (await fetch(base+'sw.js?t='+now,{cache:'no-store'})).text();const m=t.match(/CACHE\s*=\s*'([^']+)'/);if(!m)return;if(await caches.has(m[1]))return;const r=await navigator.serviceWorker.getRegistration();if(r)await r.update()}catch(e){}finally{busy=0}}
