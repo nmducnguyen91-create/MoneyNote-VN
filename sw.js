@@ -1,12 +1,12 @@
 // MoneyNote VN — service worker: mở tức thì từ bộ nhớ máy, cập nhật ngầm
-const CACHE = 'moneynote-shell-v55';
+const CACHE = 'moneynote-shell-v57';
 const ASSETS = [
   './',
   'moneynote.html',
   'moneynote-desktop.html',
   'moneynote-desktop.js?v=274',
   'moneynote-core.js?v=45',
-  'moneynote-cashback.js?v=17',
+  'moneynote-cashback.js?v=19',
   'manifest.json',
   'icon-192.png',
   'icon-512.png',

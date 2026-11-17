@@ -179,7 +179,7 @@ function css(){if(document.getElementById('mncb-css'))return;const s=document.cr
 .mncb-ok{color:#0f6b47}.mncb-warn{color:#b4470b}.mncb-bad{color:var(--red)}
 body.dark .mncb-ok,body.dark .mncb-pill{color:#5fd39f}body.dark .mncb-warn{color:#ffb27a}
 .mncb-days{font-size:12px;font-weight:600;color:var(--muted);background:var(--light);border-radius:8px;padding:3px 8px;white-space:nowrap}
-.mncb-ov{position:fixed;inset:0;background:rgba(10,20,32,.45);z-index:1400;display:flex;align-items:flex-end;justify-content:center}
+.mncb-ov{position:fixed;inset:0;background:rgba(10,20,32,.45);z-index:2147479000;display:flex;align-items:flex-end;justify-content:center}
 .mncb-sh{background:var(--card);color:var(--text);width:100%;max-width:520px;max-height:90vh;border-radius:22px 22px 0 0;display:flex;flex-direction:column;box-shadow:0 -10px 40px rgba(0,0,0,.2)}
 @media(min-width:900px){.mncb-ov{align-items:center}.mncb-sh{border-radius:18px;max-width:620px}}
 .mncb-shh{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--bdr)}
@@ -710,42 +710,54 @@ function hookChat(){
   if(typeof window.openQaChat==='function'&&!window.openQaChat.__cb){const oq=window.openQaChat;const wq=function(){const r=oq.apply(this,arguments);setTimeout(()=>{try{plusIcon()}catch(e){}},0);return r};wq.__cb=1;window.openQaChat=wq}
 
   if(typeof window.qaSend!=='function'||window.qaSend.__cb)return;const orig=window.qaSend;
-  const w=function(){const inp=gid('qa-input');const t=inp?inp.value.trim():'';let r=null;try{r=t?chatAnswer(t):null}catch(e){}
+  const w=function(){const inp=gid('qa-input');const t=inp?inp.value.trim():'';if(ATT.length){if(inp){inp.value='';inp.style.height='auto'}sendAtt(t);return}let r=null;try{r=t?chatAnswer(t):null}catch(e){}
     if(r){const lg=gid('qa-log');inp.value='';inp.style.height='auto';if(lg){lg.insertAdjacentHTML('beforeend','<div class="qa-me">'+esc(t)+'</div><div class="qa-bot">'+r+'</div>');lg.scrollTop=lg.scrollHeight}return}
     return orig.apply(this,arguments)};
   w.__cb=1;window.qaSend=w;
 }
 function integ(){try{plusIcon()}catch(e){}try{mountHint()}catch(e){}try{homeAlert()}catch(e){console.warn('cb alert',e)}try{settingsBlock()}catch(e){console.warn('cb set',e)}try{hookChat()}catch(e){}}
 
-/* ── Chat: nút "+" (thay nút máy ảnh) → thêm ảnh/PDF: hoá đơn, sao kê thẻ, sao kê hoàn tiền/điểm ── */
-const CB_IMPORTS=[];
-function plusIcon(){const b=gid('qa-cam');if(!b||b.dataset.cbPlus)return;b.dataset.cbPlus=1;b.setAttribute('aria-label','Thêm ảnh hoặc tệp');b.setAttribute('onclick','mncbPlus(event)');
+/* ── Chat: nút "+" mở thẳng chọn ảnh/PDF → hiện tệp đính kèm trên ô nhập → anh gõ yêu cầu rồi gửi ── */
+const ATT=[];
+function plusIcon(){const b=gid('qa-cam');if(!b||b.dataset.cbPlus)return;b.dataset.cbPlus=1;b.setAttribute('aria-label','Đính kèm ảnh hoặc PDF');b.setAttribute('onclick','mncbPlus(event)');
   b.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
-  if(!gid('mncb-cbfile')){const f=document.createElement('input');f.type='file';f.id='mncb-cbfile';f.accept='image/*,application/pdf';f.multiple=true;f.style.display='none';f.onchange=()=>cbImport(f);b.after(f)}}
-window.mncbPlus=function(e){if(e)e.stopPropagation();const b=gid('qa-cam');let m=gid('mncb-plusmenu');if(m){m.remove();return}
-  m=document.createElement('div');m.id='mncb-plusmenu';m.setAttribute('role','menu');
-  const r=b.getBoundingClientRect();m.style.cssText='position:fixed;z-index:1500;left:'+Math.max(8,r.left)+'px;bottom:'+(innerHeight-r.top+8)+'px;background:var(--card,#fff);color:var(--text);border:1px solid var(--bdr);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:6px;min-width:250px';
-  const it=(k,t,s)=>'<button type="button" role="menuitem" data-k="'+k+'" style="display:block;width:100%;text-align:left;border:none;background:none;color:inherit;font:inherit;padding:10px 12px;border-radius:10px;cursor:pointer;min-height:44px"><div style="font-size:15px;font-weight:600">'+t+'</div><div style="font-size:12px;color:var(--muted)">'+s+'</div></button>';
-  m.innerHTML=it('tx','Hoá đơn · chi tiêu','Ảnh/PDF hoá đơn, biên lai → ghi thu chi')+it('st','Sao kê thẻ tín dụng','Ảnh/PDF sao kê → đối chiếu, ghi giao dịch')+it('cb','Sao kê hoàn tiền · điểm thưởng','Ảnh/PDF → ghi số hoàn thực nhận của thẻ');
-  document.body.appendChild(m);
-  m.addEventListener('click',ev=>{const x=ev.target.closest('[data-k]');if(!x)return;m.remove();
-    if(x.dataset.k==='cb'){if(!aiOn()){chatSay('Đọc sao kê hoàn tiền cần bật một trợ lý AI trong <b>Cài đặt › Dữ liệu › Trợ lý AI</b>.');return}gid('mncb-cbfile').click()}
-    else{try{qaCam()}catch(e){}}});
-  setTimeout(()=>document.addEventListener('click',function h(ev){const mm=gid('mncb-plusmenu');if(mm&&!mm.contains(ev.target))mm.remove();document.removeEventListener('click',h)}),0);
-};
+  if(!gid('mncb-att')){const f=document.createElement('input');f.type='file';f.id='mncb-att';f.accept='image/*,application/pdf';f.multiple=true;f.style.display='none';f.onchange=()=>{[...(f.files||[])].forEach(x=>{if(ATT.length<6)ATT.push(x)});f.value='';attBar()};b.after(f)}}
+window.mncbPlus=function(e){if(e)e.stopPropagation();const f=gid('mncb-att');if(f)f.click()};
+function attBar(){const inp=gid('qa-input');if(!inp)return;const row=inp.parentElement;let bar=gid('mncb-attbar');const sb=gid('qa-send');
+  if(sb)sb.classList.toggle('dim',!ATT.length&&!inp.value.trim());
+  if(!inp.dataset.ph0)inp.dataset.ph0=inp.placeholder;inp.placeholder=ATT.length?'Yêu cầu cho tệp đính kèm…':inp.dataset.ph0;
+  if(!ATT.length){if(bar)bar.remove();return}
+  if(!bar){bar=document.createElement('div');bar.id='mncb-attbar';bar.style.cssText='display:flex;gap:6px;flex-wrap:wrap;padding:6px 0 8px;width:100%';row.parentElement.insertBefore(bar,row)}
+  bar.innerHTML=ATT.map((f,i)=>{const pdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name);const u=pdf?'':URL.createObjectURL(f);
+    return '<span style="position:relative;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bdr);border-radius:10px;background:var(--light);padding:'+(pdf?'6px 30px 6px 10px':'3px 30px 3px 3px')+';max-width:180px;font-size:13px">'+(pdf?'<b>PDF</b><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.name)+'</span>':'<img src="'+u+'" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:7px">')
+      +'<button type="button" aria-label="Bỏ tệp '+esc(f.name)+'" data-attdel="'+i+'" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:none;border-radius:13px;background:rgba(0,0,0,.08);cursor:pointer;color:var(--text)">✕</button></span>'}).join('')
+    ;
+  bar.querySelectorAll('[data-attdel]').forEach(x=>x.onclick=()=>{ATT.splice(+x.dataset.attdel,1);attBar()});
+  try{inp.focus()}catch(e){}
+}
+function sendAtt(t){
+  const files=ATT.splice(0);attBar();
+  const n=fold(t);
+  if(t){const lg=gid('qa-log');if(lg){lg.insertAdjacentHTML('beforeend','<div class="qa-me">'+esc(t)+'</div>');lg.scrollTop=lg.scrollHeight}}
+  if(/(hoan tien|cashback|diem thuong|tich luy|tien hoan|so hoan)/.test(n)){if(!aiOn()){chatSay('Đọc tệp cần bật một trợ lý AI trong <b>Cài đặt › Dữ liệu › Trợ lý AI</b>.');return}cbImport(files,t);return}
+  // còn lại: đưa cho bộ đọc chứng từ sẵn có (hoá đơn → ghi thu chi; sao kê thẻ → đối chiếu), kèm yêu cầu của anh
+  const fi=gid('qa-file');if(!fi||typeof window.qaImg!=='function'){chatSay('Không mở được bộ đọc tệp.');return}
+  try{const dt=new DataTransfer();files.forEach(f=>dt.items.add(f));fi.files=dt.files}catch(e){chatSay('Trình duyệt chưa hỗ trợ gửi tệp kiểu này.');return}
+  window.__qaNote=t||'';window.qaImg(fi);
+}
 function aiOn(){return typeof window.mnAI==='function'}
 function chatSay(html,me){const lg=gid('qa-log');if(!lg)return;lg.insertAdjacentHTML('beforeend',(me?'<div class="qa-me" style="display:flex;flex-wrap:wrap;gap:6px">'+me+'</div>':'')+'<div class="qa-bot">'+html+'</div>');lg.scrollTop=lg.scrollHeight}
 function fileB64(f){return new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result));r.onerror=()=>no(new Error('Không đọc được tệp.'));r.readAsDataURL(f)})}
 async function shrinkImg(f){const url=await fileB64(f);return await new Promise(ok=>{const im=new Image();im.onload=()=>{const k=Math.min(1,1600/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.85))};im.onerror=()=>ok(url);im.src=url})}
 const CB_SYS='Bạn đọc SAO KÊ HOÀN TIỀN hoặc SAO KÊ ĐIỂM THƯỞNG thẻ tín dụng Việt Nam. Chỉ trả về JSON, không giải thích: {"ngan_hang":"tên ngân hàng/thẻ","so_the_cuoi":"4 số cuối nếu có","tu":"YYYY-MM-DD","den":"YYYY-MM-DD (ngày cuối kỳ hoặc ngày sao kê)","loai":"tien|diem","tong":số tiền hoàn thực nhận trong kỳ (với điểm: điểm được cộng trong kỳ trừ điểm bị trừ do hoàn trả/huỷ giao dịch; KHÔNG trừ điểm đã đổi quà/đổi tiền),"quy_doi":số đồng cho 1 điểm nếu sao kê ghi (không ghi thì null),"nhom":[{"ten":"tên nhóm/chương trình","chi_tieu":số,"hoan":số}],"ghi_chu":"ngắn"}';
-async function cbImport(inp){
-  const files=[...(inp.files||[])].slice(0,6);inp.value='';if(!files.length)return;
+async function cbImport(src,note){
+  const files=Array.isArray(src)?src.slice(0,6):[...(src.files||[])].slice(0,6);if(!Array.isArray(src))src.value='';if(!files.length)return;
   const parts=[];let th='';
   try{for(const f of files){if(f.type==='application/pdf'||/\.pdf$/i.test(f.name)){if(f.size>9e6)throw new Error('PDF quá lớn (tối đa khoảng 9MB).');parts.push({type:'document',source:{type:'base64',media_type:'application/pdf',data:(await fileB64(f)).split(',')[1]}});th+='<div style="padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.18);font-size:15px;font-weight:600">PDF · '+esc(f.name)+'</div>'}
     else{const u=await shrinkImg(f);parts.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:u.split(',')[1]}});th+='<img src="'+u+'" alt="" style="display:block;max-width:150px;max-height:220px;border-radius:10px">'}}}
   catch(e){chatSay(esc(e.message));return}
   chatSay('Đang đọc sao kê hoàn tiền…',th);
-  parts.push({type:'text',text:'Đọc sao kê hoàn tiền / điểm thưởng này.'});
+  parts.push({type:'text',text:'Đọc sao kê hoàn tiền / điểm thưởng này.'+(note?' Yêu cầu của người dùng: '+note:'')});
   let j=null;try{const s=await window.mnAI([{role:'user',content:parts}],CB_SYS,1500);const m=/\{[\s\S]*\}/.exec(String(s||''));j=m?JSON.parse(m[0]):null}catch(e){chatSay('Không đọc được: '+esc(e.message));return}
   if(!j||!(+j.tong>=0)||!/^\d{4}-\d{2}-\d{2}$/.test(j.den||'')){chatSay('Không nhận ra số hoàn và kỳ sao kê trong tệp này.');return}
   const tong=Math.round((+j.tong||0)*(j.loai==='diem'&&+j.quy_doi>0?+j.quy_doi:1));
