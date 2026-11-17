@@ -146,7 +146,13 @@ function css(){if(document.getElementById('mncb-css'))return;const s=document.cr
 .mncb-hero .l{font-size:13px;opacity:.92}
 .mncb-hero .big{font-size:30px;font-weight:800;letter-spacing:-.6px;margin:4px 0 12px;font-variant-numeric:tabular-nums}
 .mncb-hstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;border-top:1px solid rgba(255,255,255,.22);padding-top:10px}
-.mncb-hstats div{min-width:0}.mncb-hstats .v{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.mncb-hstats div{min-width:0}
+.mncb-h3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 10px}.mncb-h3 div{min-width:0}.mncb-h3 span{display:block;font-size:12px;opacity:.9;white-space:nowrap}.mncb-h3 b{display:block;font-size:17px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mncb-hcards i{display:block;font-style:normal;font-size:11px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mncb-hbtn{flex:1;min-height:40px;border-radius:10px;border:none;background:#fff;color:#0f6b47;font:inherit;font-weight:700;cursor:pointer}.mncb-hbtn.ghost{background:rgba(255,255,255,.16);color:#fff}.mncb-hbtn:disabled{opacity:.5;cursor:default}
+.mncb-hcards{display:flex;gap:6px;margin:0 0 10px}.mncb-hcards button{flex:1 1 0;min-width:0;border:none;border-radius:10px;background:rgba(255,255,255,.16);color:#fff;font:inherit;padding:6px 8px;cursor:pointer;text-align:left;min-height:44px}
+.mncb-hcards span{display:block;font-size:12px;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mncb-hcards b{display:block;font-size:15px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mncb-hstats2{display:flex;justify-content:space-between;gap:10px;border-top:1px solid rgba(255,255,255,.22);padding-top:8px;font-size:13px;opacity:.95;white-space:nowrap}.mncb-hstats2 b{font-variant-numeric:tabular-nums}.mncb-hstats .v{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
 .mncb-row{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .mncb-btn{min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--bdr);background:var(--card);color:var(--text);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
 .mncb-btn.pri{background:var(--navy);border-color:var(--navy);color:#fff}
@@ -340,6 +346,49 @@ function renderTx(){
     persist();try{toast(cur?'Đã bỏ đánh dấu online':'Đã đánh dấu online')}catch(e){}});
 }
 
+/* ══ SỔ TIỀN HOÀN: tổng đã hoàn · đang treo (chưa rút) · đã rút ══
+ * a.cashback.payout: 'accrue' (mặc định: tiền/điểm hoàn tích luỹ, chờ anh rút) | 'direct' (ngân hàng tự trả vào thẻ → không treo)
+ * a.cbOpen = {amount,date}: số dư treo ban đầu tại ngày date (vd VIB 875.695 điểm ngày 15/11/2026). Các kỳ trong cbHist bắt đầu SAU date mới cộng thêm (tránh tính trùng).
+ * a.cbWd = [{id,date,amount,to,txIds}]: các lần rút về. Rút vào thẻ → ghi khoản thu "Hoàn tiền" tiền mặt + chuyển khoản tiền mặt → thẻ (trừ dư nợ, tiền mặt không đổi); rút vào tài khoản khác → khoản thu "Hoàn tiền" vào tài khoản đó. */
+function payoutOf(a){const c=a&&a.cashback;return c&&c.payout==='direct'?'direct':'accrue'}
+function cbLedger(a){
+  const mode=payoutOf(a),op=a.cbOpen&&+a.cbOpen.amount>0?{amount:+a.cbOpen.amount,date:a.cbOpen.date||''}:null;
+  const H=(a.cbHist||[]).filter(h=>h&&h.actual!=null);const after=h=>!op||!op.date||(h.s||h.id||'')>op.date;
+  const earned=(op?op.amount:0)+H.filter(after).reduce((s,h)=>s+(+h.actual||0),0);
+  const wd=(a.cbWd||[]).reduce((s,w)=>s+(+w.amount||0),0);
+  return {mode,open:op,earned,withdrawn:wd,pending:mode==='accrue'?Math.max(0,earned-wd):0};
+}
+function ledgerCards(){return cbCards().filter(a=>{const p=cbPol(a);return (p&&p.ok)||(a.cbHist||[]).length||a.cbOpen||(a.cbWd||[]).length})}
+window.cbLedger=cbLedger;
+window.mncbWithdraw=function(id){
+  const L=ledgerCards().map(a=>({a,l:cbLedger(a)})).filter(x=>x.l.mode==='accrue'&&x.l.pending>0);
+  if(!L.length){sheet('Rút tiền hoàn','<div style="font-size:15px;color:var(--muted)">Chưa có khoản hoàn nào đang treo. Ghi số thực nhận ở "Lịch sử hoàn tiền" hoặc nhập số dư treo ban đầu trong Chính sách của thẻ.</div>');return}
+  let cur=L.find(x=>x.a.id===id)||L[0];
+  const accs=(db.accounts||[]).filter(x=>!x.hidden);
+  const draw=()=>{const B=setBody('<label class="mncb-f"><span>Rút từ thẻ</span><select class="mncb-in" id="mncb-wd-card">'+L.map(x=>'<option value="'+x.a.id+'"'+(x===cur?' selected':'')+'>'+esc(sn(x.a))+' · đang treo '+K(x.l.pending)+'</option>').join('')+'</select></label>'
+      +'<div class="mncb-g2"><label class="mncb-f"><span>Số tiền (đ)</span><input class="mncb-in mncb-money" id="mncb-wd-amt" inputmode="numeric" value="'+moneyTxt(cur.l.pending)+'"></label><label class="mncb-f"><span>Ngày</span><input class="mncb-in" type="date" id="mncb-wd-date" value="'+iso(new Date())+'"></label></div>'
+      +'<label class="mncb-f"><span>Nhận về</span><select class="mncb-in" id="mncb-wd-to"><option value="__card">Trả vào thẻ '+esc(sn(cur.a))+' (trừ dư nợ)</option>'+accs.filter(x=>x.type!=='credit').map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('')+'</select></label>'
+      +'<div style="font-size:13px;color:var(--muted);margin:-2px 0 10px">Trả vào thẻ: app ghi khoản thu "Hoàn tiền" và một khoản chuyển vào thẻ để giảm dư nợ (tiền mặt không đổi). Nhận về tài khoản: ghi khoản thu "Hoàn tiền" vào tài khoản đó.</div>'
+      +'<button class="mncb-btn pri" style="width:100%" id="mncb-wd-ok">Ghi rút về</button>');
+    gid('mncb-wd-card').onchange=e=>{cur=L.find(x=>x.a.id===e.target.value)||cur;draw()};
+    gid('mncb-wd-ok').onclick=()=>{const amt=money(gid('mncb-wd-amt').value),date=gid('mncb-wd-date').value||iso(new Date()),to=gid('mncb-wd-to').value;
+      if(!amt){try{toast('Nhập số tiền rút')}catch(e){}return}
+      if(amt>cur.l.pending+1){try{toast('Lớn hơn số đang treo ('+K(cur.l.pending)+')')}catch(e){}return}
+      const a=cur.a,base=Date.now(),ids=[];db.transactions=db.transactions||[];const nm='Hoàn tiền '+sn(a);
+      if(to==='__card'){const cash=(db.accounts||[]).find(x=>x.id==='cash')?'cash':((db.accounts||[]).find(x=>x.type!=='credit')||{}).id;
+        db.transactions.push({id:base,amount:amt,desc:nm+' → trả thẻ',category:'Hoàn tiền',group:'personal',flow:'in',date,note:'',account:cash,cbWd:1});ids.push(base);
+        db.transactions.push({id:base+1,amount:amt,desc:nm+' → trả thẻ',category:'Chuyển khoản',group:'personal',flow:'xfer',date,note:'',from:cash,to:a.id,cbWd:1});ids.push(base+1)}
+      else{db.transactions.push({id:base,amount:amt,desc:nm,category:'Hoàn tiền',group:'personal',flow:'in',date,note:'',account:to,cbWd:1});ids.push(base)}
+      a.cbWd=Array.isArray(a.cbWd)?a.cbWd:[];a.cbWd.push({id:'wd'+base,date,amount:amt,to,txIds:ids});
+      close();persist();try{toast('Đã ghi rút '+K(amt)+' từ '+sn(a))}catch(e){}};
+  };
+  sheet('Rút tiền hoàn về','');draw();
+};
+window.mncbWdDel=function(aid,wid){const a=cbCards().find(x=>x.id===aid);if(!a)return;const i=(a.cbWd||[]).findIndex(w=>w.id===wid);if(i<0)return;const w=a.cbWd[i];
+  const ids=new Set((w.txIds||[]).map(String));const old=(db.transactions||[]).filter(t=>ids.has(String(t.id)));
+  db.transactions=(db.transactions||[]).filter(t=>!ids.has(String(t.id)));a.cbWd.splice(i,1);close();persist();
+  try{toastUndo('Đã xoá lần rút '+K(w.amount),()=>{a.cbWd.splice(i,0,w);db.transactions.push(...old);persist()})}catch(e){}};
+
 /* ── Màn Hoàn tiền ── */
 function render(){
   const box=$('acp-cb');if(!box||box.style.display==='none')return;css();
@@ -349,20 +398,26 @@ function render(){
   const none=cards.filter(a=>!act.some(x=>x.a===a));
   const tot=act.reduce((s,x)=>s+x.c.total,0),spent=act.reduce((s,x)=>s+x.c.spent,0);
   let prevAct=0,prevN=0;act.forEach(x=>{const h=cbHistory(x.a,1)[1];if(h&&h.actual!=null){prevAct+=h.actual;prevN++}});
-  let h='<div class="mncb-card mncb-hero" style="margin-top:8px"><div class="l">Hoàn tiền dự kiến kỳ này</div><div class="big">'+K(tot)+'</div>'
-    +'<div class="mncb-hstats"><div><div class="l">Chi tiêu tính hoàn</div><div class="v">'+K(spent)+'</div></div>'
-    +'<div><div class="l">Thẻ có chính sách</div><div class="v">'+act.length+'/'+cards.length+'</div></div>'
-    +'<div><div class="l">Kỳ trước thực nhận</div><div class="v">'+(prevN?K(prevAct):'—')+'</div></div></div></div>'
-    +'<div id="acp-cb-sg" style="margin-top:-2px"></div><button class="mncb-btn" style="width:100%;margin:0 0 12px" onclick="mncbHist()">Lịch sử hoàn tiền</button>';
+  // Ô xanh: Tổng đã hoàn · Đang treo (chưa rút) · Dự kiến kỳ này; mỗi thẻ một ô nhỏ (bấm để tới khung thẻ)
+  const LC=ledgerCards().map(a=>({a,l:cbLedger(a),c:cbCalc(a)}));
+  const gEarn=LC.reduce((s,x)=>s+(x.l.mode==='accrue'?x.l.earned:(x.a.cbHist||[]).reduce((t,h)=>t+(+h.actual||0),0)),0);
+  const gPend=LC.reduce((s,x)=>s+x.l.pending,0),gWd=LC.reduce((s,x)=>s+x.l.withdrawn,0);
+  let h='<div class="mncb-card mncb-hero" style="margin-top:8px;padding:14px 16px 12px"><div class="mncb-row"><span class="l">Tổng đã hoàn</span><span class="l" style="white-space:nowrap">'+act.length+'/'+cards.length+' thẻ có chính sách</span></div>'
+    +'<div class="big" style="margin:2px 0 10px">'+K(gEarn)+'</div>'
+    +'<div class="mncb-h3"><div><span>Đang treo</span><b>'+K(gPend)+'</b></div><div><span>Đã rút</span><b>'+K(gWd)+'</b></div><div><span>Dự kiến kỳ này</span><b>'+K(tot)+'</b></div></div>'
+    +(LC.length?'<div class="mncb-hcards">'+LC.map(x=>'<button type="button" data-goto="'+x.a.id+'"><span>'+esc(sn(x.a))+(x.l.mode==='direct'?' · trả thẳng':'')+'</span><b>'+(x.l.mode==='accrue'?K(x.l.pending):K(x.c?x.c.total:0))+'</b><i>'+(x.l.mode==='accrue'?'treo':'kỳ này')+(x.c&&x.l.mode==='accrue'?' · kỳ này +'+K(x.c.total):'')+'</i></button>').join('')+'</div>':'')
+    +'<div class="mncb-row" style="gap:8px"><button type="button" class="mncb-hbtn" onclick="mncbWithdraw()"'+(gPend>0?'':' disabled')+'>Rút về</button><button type="button" class="mncb-hbtn ghost" onclick="mncbHist()">Lịch sử</button></div>'
+    +'<div class="mncb-hstats2" style="margin-top:10px"><span>Chi tính hoàn <b>'+K(spent)+'</b></span><span>Kỳ trước nhận <b>'+(prevN?K(prevAct):'—')+'</b></span></div></div>'
+    +'<div id="acp-cb-sg" style="margin-top:-2px"></div>';
   h+=act.map(x=>cardHtml(x.a,x.c)).join('');
   if(none.length)h+='<div class="mncb-card"><div class="mncb-row"><span style="font-size:15px;font-weight:700">Chưa cài chính sách</span><span style="font-size:13px;color:var(--muted)">'+none.length+' thẻ</span></div>'
     +none.map(a=>'<div class="mncb-line"><span class="n">'+esc(sn(a))+((a.cbHist||[]).length?'<div class="m">Đã ghi thực nhận '+(a.cbHist||[]).length+' kỳ · gần nhất '+K(a.cbHist.slice().sort((x,y)=>y.id.localeCompare(x.id))[0].actual)+'</div>':'')+'</span><span style="display:flex;gap:6px">'+((a.cbHist||[]).length?'<button class="mncb-btn sm" onclick="mncbHist(\''+a.id+'\')">Lịch sử</button>':'')+'<button class="mncb-btn sm" onclick="mncbEdit(\''+a.id+'\')">+ Cài chính sách</button></span></div>').join('')
     +'<div style="font-size:12px;color:var(--muted);margin-top:6px">Nhập % hoàn, trần và điều kiện theo biểu phí/thể lệ của ngân hàng.</div></div>';
-  box.innerHTML=h;const sgb=$('acp-cb-sg');if(sgb)drawSuggest(sgb,true);
+  box.innerHTML=h;const sgb=$('acp-cb-sg');if(sgb)drawSuggest(sgb,true);box.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>{const t=$('mncb-c-'+b.dataset.goto);if(t)t.scrollIntoView({behavior:'smooth',block:'start'})});
 }
 function cardHtml(a,c){
   const tip=c.tips[0];const capT=c.cap||c.maxPossible;
-  let h='<div class="mncb-card"><div class="mncb-row" style="align-items:flex-start"><div style="min-width:0"><div style="font-size:'+T_TITLE+'px;font-weight:700">'+esc(sn(a))+'</div>'
+  let h='<div class="mncb-card" id="mncb-c-'+a.id+'"><div class="mncb-row" style="align-items:flex-start"><div style="min-width:0"><div style="font-size:'+T_TITLE+'px;font-weight:700">'+esc(sn(a))+'</div>'
     +'<div style="font-size:13px;color:var(--muted);margin-top:2px">Kỳ hoàn '+dm(c.s)+' – '+dm(c.e)+'</div></div><span class="mncb-days">'+(c.current?(c.daysLeft?'Còn '+c.daysLeft+' ngày':'Hôm nay hết kỳ'):'')+'</span></div>';
   if(tip)h+='<div class="mncb-tip"><b class="mncb-ok">Nên làm:</b> '+tip.html+'</div>';
   h+='<div class="mncb-tiles"><div class="mncb-tile"><div class="l">Đã chi kỳ này</div><div class="v">'+K(c.spent)+'</div>'
@@ -424,7 +479,7 @@ window.mncbHist=function(id){
   const list=id?cbCards().filter(a=>a.id===id):cbActive();
   if(!list.length){sheet('Lịch sử hoàn tiền','<div style="font-size:15px;color:var(--muted)">Chưa có thẻ nào cài chính sách hoàn tiền.</div>');return}
   let tE=0,tA=0;
-  const body=list.map(a=>{const H=cbHistory(a,6);return '<div class="mncb-sec" style="margin-top:4px">'+esc(sn(a))+'</div>'+H.map(x=>{
+  const body=list.map(a=>{const H=cbHistory(a,6);const lg=cbLedger(a);return '<div class="mncb-sec" style="margin-top:4px">'+esc(sn(a))+'</div>'+(lg.mode==='accrue'?'<div class="m" style="font-size:13px;color:var(--muted);margin:-2px 0 4px">Đã hoàn '+K(lg.earned)+(lg.open?' (gồm số dư '+K(lg.open.amount)+' ngày '+dm(lg.open.date)+(a.cbOpen&&a.cbOpen.note?' · '+esc(a.cbOpen.note):'')+')':'')+' · đã rút '+K(lg.withdrawn)+' · đang treo <b class="mncb-ok">'+K(lg.pending)+'</b></div>':'')+(a.cbWd||[]).map(w=>'<div class="mncb-line"><div class="m" style="flex:1">Rút '+dm(w.date)+'/'+String(w.date).slice(0,4)+' → '+esc(w.to==='__card'?'trả thẻ':((db.accounts||[]).find(x=>x.id===w.to)||{}).name||'tài khoản')+'</div><div class="r">−'+K(w.amount)+'</div><button type="button" class="mncb-btn sm link" onclick="mncbWdDel(\''+a.id+'\',\''+w.id+'\')">Xoá</button></div>').join('')+H.map(x=>{
       if(!x.current&&x.actual!=null){tE+=x.est;tA+=x.actual}
       const diff=x.actual!=null?x.actual-x.est:null;
       return '<div class="mncb-line"><div style="min-width:0;flex:1"><div class="n" style="font-size:13px">'+dm(x.s)+' – '+dm(x.e)+(x.current?' <span class="mncb-pill">kỳ này</span>':'')+'</div>'+(x.note?'<div class="m">'+esc(x.note)+'</div>':'')+'<div class="m">Chi '+K(x.spent)+' · dự kiến '+K(x.est)+(diff!=null&&Math.abs(diff)>=1000?' · <span class="'+(diff<0?'mncb-bad':'mncb-ok')+'">lệch '+(diff>0?'+':'−')+K(Math.abs(diff))+'</span>':'')+'</div></div>'
@@ -444,7 +499,7 @@ window.mncbHist=function(id){
 let ed=null,edCard=null,edOpen={};
 window.mncbEdit=function(id){
   const a=cbCards().find(x=>x.id===id);if(!a)return;edCard=a;edOpen={};
-  const p=cbPol(a)||cbPol({cashback:{}});ed=JSON.parse(JSON.stringify({period:p.period,startDay:p.startDay,cap:p.cap,base:p.base,rules:p.rules,conds:p.conds,excl:p.excl,target:p.target,note:p.note,onlineKw:p.onlineKw,onlineCats:p.onlineCats}));
+  const p=cbPol(a)||cbPol({cashback:{}});ed=JSON.parse(JSON.stringify({period:p.period,startDay:p.startDay,cap:p.cap,base:p.base,rules:p.rules,conds:p.conds,excl:p.excl,target:p.target,note:p.note,onlineKw:p.onlineKw,onlineCats:p.onlineCats,payout:(a.cashback&&a.cashback.payout)||'accrue',openAmt:(a.cbOpen&&+a.cbOpen.amount)||0,openDate:(a.cbOpen&&a.cbOpen.date)||iso(new Date())}));
   if(!ed.rules.length)ed.rules.push({id:uid(),name:'',match:'cats',cats:[],rate:0,cap:0,min:0,tiers:[]});
   sheet('Chính sách hoàn tiền · '+sn(a),'');drawEdit()};
 function catPicker(key,sel){
@@ -459,6 +514,8 @@ function drawEdit(){
     +'<div style="font-size:13px;color:var(--muted);margin:-4px 0 6px">Kỳ hiện tại: '+dm(pv.s)+' – '+dm(pv.e)+'</div>'
     +'<div class="mncb-g2"><label class="mncb-f"><span>Trần hoàn cả thẻ / kỳ (đ, 0 = không)</span><input class="mncb-in mncb-money" data-k="cap" inputmode="numeric" value="'+moneyTxt(e.cap)+'"></label>'
     +'<label class="mncb-f"><span>Mục tiêu chi cá nhân / kỳ (đ)</span><input class="mncb-in mncb-money" data-k="target" inputmode="numeric" value="'+moneyTxt(e.target)+'"></label></div>';
+  h+='<div class="mncb-sec">Cách nhận tiền hoàn</div><label class="mncb-f"><span>Tiền hoàn / điểm</span><select class="mncb-in" data-k="payout"><option value="accrue"'+(e.payout!=='direct'?' selected':'')+'>Tích luỹ, chờ rút về (treo)</option><option value="direct"'+(e.payout==='direct'?' selected':'')+'>Ngân hàng tự trả vào thẻ mỗi kỳ</option></select></label>'
+    +(e.payout!=='direct'?'<div class="mncb-g2"><label class="mncb-f"><span>Số dư treo ban đầu (đ)</span><input class="mncb-in mncb-money" data-k="openAmt" inputmode="numeric" value="'+moneyTxt(e.openAmt)+'" placeholder="0"></label><label class="mncb-f"><span>Tính đến ngày</span><input class="mncb-in" type="date" data-k="openDate" value="'+esc(e.openDate)+'"></label></div><div style="font-size:12px;color:var(--muted);margin:-4px 0 8px">Các kỳ hoàn bắt đầu sau ngày này mới được cộng thêm vào số treo.</div>':'');
   h+='<div class="mncb-sec">Nhóm danh mục được hoàn</div>'+e.rules.map((r,i)=>'<div class="mncb-box"><div class="mncb-row" style="margin-bottom:6px"><b style="font-size:15px">Nhóm '+(i+1)+'</b><button class="mncb-btn sm link" data-del="rules" data-i="'+i+'">Xoá nhóm</button></div>'
     +'<label class="mncb-f"><span>Tên nhóm (tuỳ chọn)</span><input class="mncb-in" data-r="'+i+'" data-f="name" value="'+esc(r.name)+'" placeholder="Ví dụ: Ăn uống & Siêu thị"></label>'
     +'<label class="mncb-f"><span>Áp dụng cho</span><select class="mncb-in" data-r="'+i+'" data-f="match"><option value="cats"'+(r.match!=='online'?' selected':'')+'>Danh mục chọn</option><option value="online"'+(r.match==='online'?' selected':'')+'>Giao dịch trực tuyến (online)</option></select></label>'
@@ -485,8 +542,8 @@ function drawEdit(){
   const top=ovEl.querySelector('.mncb-shb').scrollTop;setBody(h);ovEl.querySelector('.mncb-shb').scrollTop=top;
   const B=ovEl.querySelector('.mncb-shb');
   B.querySelectorAll('[data-k]').forEach(el=>el.addEventListener(el.tagName==='SELECT'?'change':'input',()=>{const k=el.dataset.k,mon=el.classList.contains('mncb-money');
-    const v=k==='note'?el.value:k==='onlineKw'?el.value.split(/[,\n]/).map(x=>x.trim()).filter(Boolean):k==='period'?el.value:mon?money(el.value):num(el.value);
-    if(k.startsWith('base.'))e.base[k.slice(5)]=v;else e[k]=k==='startDay'?Math.min(31,Math.max(1,Math.round(v)||1)):v;if(k==='period'||k==='startDay')drawEdit()}));
+    const v=(k==='note'||k==='openDate')?el.value:k==='onlineKw'?el.value.split(/[,\n]/).map(x=>x.trim()).filter(Boolean):(k==='period'||k==='payout')?el.value:mon?money(el.value):num(el.value);
+    if(k.startsWith('base.'))e.base[k.slice(5)]=v;else e[k]=k==='startDay'?Math.min(31,Math.max(1,Math.round(v)||1)):v;if(k==='period'||k==='startDay'||k==='payout')drawEdit()}));
   B.querySelectorAll('[data-r],[data-c][data-f]').forEach(el=>{const arr=el.dataset.r!=null?e.rules:e.conds,i=+(el.dataset.r!=null?el.dataset.r:el.dataset.c),f=el.dataset.f;
     el.addEventListener(el.tagName==='SELECT'?'change':'input',()=>{const mon=el.classList.contains('mncb-money');arr[i][f]=(f==='name'||f==='label'||f==='scope'||f==='match')?el.value:mon?money(el.value):num(el.value);if(f==='scope'||f==='match')drawEdit()})});
   B.querySelectorAll('[data-t]').forEach(el=>{const[i,j]=el.dataset.t.split(':').map(Number),f=el.dataset.f;el.addEventListener('input',()=>{e.rules[i].tiers[j][f]=el.classList.contains('mncb-money')?money(el.value):num(el.value)})});
@@ -507,7 +564,8 @@ function drawEdit(){
     if(!rules.length&&!(e.base.rate>0)){try{toast('Cần ít nhất một nhóm danh mục hoặc % hoàn mặc định')}catch(_){}return}
     edCard.cashback={period:e.period,startDay:e.startDay,cap:+e.cap||0,base:{rate:+e.base.rate||0,cap:+e.base.cap||0},rules,
       conds:e.conds.filter(c=>c.min>0&&(c.scope!=='cats'||c.cats.length)).map(c=>({id:c.id,label:String(c.label||'').trim(),scope:c.scope,cats:c.scope==='cats'?c.cats:[],min:+c.min})),
-      excl:e.excl,target:+e.target||0,note:String(e.note||'').trim(),onlineKw:(e.onlineKw||[]).slice(),onlineCats:(e.onlineCats||[]).slice(),updated:iso(new Date())};
+      excl:e.excl,target:+e.target||0,note:String(e.note||'').trim(),onlineKw:(e.onlineKw||[]).slice(),onlineCats:(e.onlineCats||[]).slice(),payout:e.payout==='direct'?'direct':'accrue',updated:iso(new Date())};
+    if(e.payout!=='direct'&&+e.openAmt>0)edCard.cbOpen={amount:+e.openAmt,date:e.openDate||iso(new Date())};else if(+e.openAmt===0&&edCard.cbOpen)delete edCard.cbOpen;
     close();persist();try{toast('Đã lưu chính sách hoàn tiền')}catch(_){}};
 }
 window.mncbClose=close;
@@ -522,6 +580,12 @@ const SEED_VP={period:'stmt',cap:0,base:{rate:0.1,cap:0},
          {id:'vp_anuong',name:'Ăn uống',match:'cats',cats:['Ăn uống'],rate:2,cap:100000,min:0,tiers:[{min:10000000,rate:4,cap:200000},{min:100000000,rate:4,cap:200000}]}],
   conds:[],excl:[],target:0,onlineKw:ONLINE_KW_DEF.slice(),onlineCats:['Di chuyển'],
   note:'VPBank StepUp — bậc theo tổng doanh số kỳ sao kê: dưới 10tr: online 6% (tối đa 300K), ăn uống 2% (tối đa 100K) · 10tr–dưới 100tr: online 15% (700K), ăn uống 4% (200K) · từ 100tr: online 15% (1,5tr), ăn uống 4% (200K) · còn lại 0,1% không giới hạn. Một số giao dịch không được hoàn (ví dụ FPT Telecom kỳ 10/2026). Chính sách có thể thay đổi theo VPBank.'};
+// VIB Max Card gói Pro (user xác nhận 17/11/2026; số liệu từ nguồn thứ cấp ndh.vn cập nhật 26/10/2026, đối chiếu sao kê điểm 15/11: Shopee = 8%):
+// danh mục ưu tiên "giao dịch trực tuyến" 8%, chi tiêu khác 0,1%, tối đa 1.000.000/kỳ sao kê; 1 điểm = 1đ. Mua sắm trên thẻ VIB của anh chủ yếu là Shopee → tính online.
+const SEED_VIB={period:'stmt',cap:1000000,base:{rate:0.1,cap:0},
+  rules:[{id:'vib_online',name:'Thanh toán online',match:'online',cats:[],rate:8,cap:1000000,min:0,tiers:[]}],
+  conds:[],excl:[],target:0,onlineKw:ONLINE_KW_DEF.slice(),onlineCats:['Mua sắm'],
+  note:'VIB Max Card gói Pro: danh mục ưu tiên Giao dịch trực tuyến hoàn 8% (bằng điểm, 1 điểm = 1đ), chi tiêu khác 0,1%, tối đa 1.000.000đ/kỳ sao kê. Gói đổi được sau mỗi 3 kỳ sao kê; điểm hết hạn sau 6 tháng. Số liệu theo nguồn tổng hợp (ndh.vn, 26/10/2026) — đối chiếu lại thể lệ trên app MAX/VIB.'};
 function addHist(a,ref,actual,note){const per=cbPeriod(a,ref);a.cbHist=Array.isArray(a.cbHist)?a.cbHist:[];if(a.cbHist.some(x=>x.id===per.s))return false;a.cbHist.push({id:per.s,s:per.s,e:per.e,actual,note,at:'2026-11-17'});return true}
 let seedBusy=false;
 function cbSeed(){
@@ -529,9 +593,11 @@ function cbSeed(){
   let vps=cr.filter(a=>/\bvp\b|vpbank|step\s*up/i.test(a.name||''));if(vps.length>1)vps=vps.filter(a=>+a.stDay===20);
   if(vps.length===1){const a=vps[0];if(!a._cbSeedVP){if(!a.cashback)a.cashback=JSON.parse(JSON.stringify(SEED_VP));
     addHist(a,'2026-10-20',812911,'Online 700.000 (tính ra 994.482, chạm trần) · Ăn uống 107.669 · Còn lại 5.242 · FPT Telecom không hoàn');a._cbSeedVP=1;ch=true}}
+  // VP StepUp: app VPBank NEO 17/11/2026 — Tổng tiền tích luỹ 3.003.712đ (chờ 'Yêu cầu hoàn tiền'; 104.229đ hết hạn 31/12/2027)
+  if(vps.length===1){const a=vps[0];if(!a._cbSeedVPopen){if(!a.cbOpen)a.cbOpen={amount:3003712,date:'2026-11-17',note:'104.229đ hết hạn 31/12/2027'};if(a.cashback&&!a.cashback.payout)a.cashback.payout='accrue';a._cbSeedVPopen=1;ch=true}}
   if(vps.length===1){const a=vps[0];if(!a._cbSeedVP2){if(a.cashback&&!Array.isArray(a.cashback.onlineCats))a.cashback.onlineCats=['Di chuyển'];a._cbSeedVP2=1;ch=true}}
   let vib=cr.filter(a=>/vib/i.test(a.name||''));const mx=vib.filter(a=>/max/i.test(a.name||''));if(mx.length)vib=mx;   // user xác nhận 17/11: "Thẻ VIB" (chốt 25) chính là Max Card
-  if(vib.length===1){const a=vib[0];if(!a._cbSeedVIB){addHist(a,'2026-11-15',154110,'Điểm thưởng: +161.726, −7.616 hoàn trả mua hàng Shopee · 1 điểm = 1 đ');a._cbSeedVIB=1;ch=true}}
+  if(vib.length===1){const a=vib[0];if(!a._cbSeedVIBopen){if(!a.cbOpen)a.cbOpen={amount:875695,date:'2026-11-15'};a._cbSeedVIBopen=1;ch=true}if(!a._cbSeedVIBpol){if(!a.cashback)a.cashback=JSON.parse(JSON.stringify(SEED_VIB));a._cbSeedVIBpol=1;ch=true}if(!a._cbSeedVIB){addHist(a,'2026-11-15',154110,'Điểm thưởng: +161.726, −7.616 hoàn trả mua hàng Shopee · 1 điểm = 1 đ');a._cbSeedVIB=1;ch=true}}
   if(ch){seedBusy=true;setTimeout(()=>{seedBusy=false;persist()},50)}
 }
 /* ══ NỐI VÀO CÁC MÀN KHÁC: form nhập · Tổng quan · Thống kê · Cài đặt · Chat ══ */
@@ -641,13 +707,64 @@ function chatAnswer(t){
   return (L.length>1?'Hoàn tiền dự kiến kỳ này: <b>'+K(tot)+'</b><br>':'')+L.map(x=>'<b>'+esc(sn(x.a))+'</b> · kỳ '+dm(x.c.s)+'–'+dm(x.c.e)+' · chi '+K(x.c.spent)+' → hoàn <b>'+K(x.c.total)+'</b>'+(x.c.tips[0]&&x.c.tips[0].k!=='capfull'?'<br><span class="qa-why">Nên: '+x.c.tips[0].html+'</span>':'')).join('<br>');
 }
 function hookChat(){
+  if(typeof window.openQaChat==='function'&&!window.openQaChat.__cb){const oq=window.openQaChat;const wq=function(){const r=oq.apply(this,arguments);setTimeout(()=>{try{plusIcon()}catch(e){}},0);return r};wq.__cb=1;window.openQaChat=wq}
+
   if(typeof window.qaSend!=='function'||window.qaSend.__cb)return;const orig=window.qaSend;
   const w=function(){const inp=gid('qa-input');const t=inp?inp.value.trim():'';let r=null;try{r=t?chatAnswer(t):null}catch(e){}
     if(r){const lg=gid('qa-log');inp.value='';inp.style.height='auto';if(lg){lg.insertAdjacentHTML('beforeend','<div class="qa-me">'+esc(t)+'</div><div class="qa-bot">'+r+'</div>');lg.scrollTop=lg.scrollHeight}return}
     return orig.apply(this,arguments)};
   w.__cb=1;window.qaSend=w;
 }
-function integ(){try{mountHint()}catch(e){}try{homeAlert()}catch(e){console.warn('cb alert',e)}try{settingsBlock()}catch(e){console.warn('cb set',e)}try{hookChat()}catch(e){}}
+function integ(){try{plusIcon()}catch(e){}try{mountHint()}catch(e){}try{homeAlert()}catch(e){console.warn('cb alert',e)}try{settingsBlock()}catch(e){console.warn('cb set',e)}try{hookChat()}catch(e){}}
+
+/* ── Chat: nút "+" (thay nút máy ảnh) → thêm ảnh/PDF: hoá đơn, sao kê thẻ, sao kê hoàn tiền/điểm ── */
+const CB_IMPORTS=[];
+function plusIcon(){const b=gid('qa-cam');if(!b||b.dataset.cbPlus)return;b.dataset.cbPlus=1;b.setAttribute('aria-label','Thêm ảnh hoặc tệp');b.setAttribute('onclick','mncbPlus(event)');
+  b.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+  if(!gid('mncb-cbfile')){const f=document.createElement('input');f.type='file';f.id='mncb-cbfile';f.accept='image/*,application/pdf';f.multiple=true;f.style.display='none';f.onchange=()=>cbImport(f);b.after(f)}}
+window.mncbPlus=function(e){if(e)e.stopPropagation();const b=gid('qa-cam');let m=gid('mncb-plusmenu');if(m){m.remove();return}
+  m=document.createElement('div');m.id='mncb-plusmenu';m.setAttribute('role','menu');
+  const r=b.getBoundingClientRect();m.style.cssText='position:fixed;z-index:1500;left:'+Math.max(8,r.left)+'px;bottom:'+(innerHeight-r.top+8)+'px;background:var(--card,#fff);color:var(--text);border:1px solid var(--bdr);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:6px;min-width:250px';
+  const it=(k,t,s)=>'<button type="button" role="menuitem" data-k="'+k+'" style="display:block;width:100%;text-align:left;border:none;background:none;color:inherit;font:inherit;padding:10px 12px;border-radius:10px;cursor:pointer;min-height:44px"><div style="font-size:15px;font-weight:600">'+t+'</div><div style="font-size:12px;color:var(--muted)">'+s+'</div></button>';
+  m.innerHTML=it('tx','Hoá đơn · chi tiêu','Ảnh/PDF hoá đơn, biên lai → ghi thu chi')+it('st','Sao kê thẻ tín dụng','Ảnh/PDF sao kê → đối chiếu, ghi giao dịch')+it('cb','Sao kê hoàn tiền · điểm thưởng','Ảnh/PDF → ghi số hoàn thực nhận của thẻ');
+  document.body.appendChild(m);
+  m.addEventListener('click',ev=>{const x=ev.target.closest('[data-k]');if(!x)return;m.remove();
+    if(x.dataset.k==='cb'){if(!aiOn()){chatSay('Đọc sao kê hoàn tiền cần bật một trợ lý AI trong <b>Cài đặt › Dữ liệu › Trợ lý AI</b>.');return}gid('mncb-cbfile').click()}
+    else{try{qaCam()}catch(e){}}});
+  setTimeout(()=>document.addEventListener('click',function h(ev){const mm=gid('mncb-plusmenu');if(mm&&!mm.contains(ev.target))mm.remove();document.removeEventListener('click',h)}),0);
+};
+function aiOn(){return typeof window.mnAI==='function'}
+function chatSay(html,me){const lg=gid('qa-log');if(!lg)return;lg.insertAdjacentHTML('beforeend',(me?'<div class="qa-me" style="display:flex;flex-wrap:wrap;gap:6px">'+me+'</div>':'')+'<div class="qa-bot">'+html+'</div>');lg.scrollTop=lg.scrollHeight}
+function fileB64(f){return new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result));r.onerror=()=>no(new Error('Không đọc được tệp.'));r.readAsDataURL(f)})}
+async function shrinkImg(f){const url=await fileB64(f);return await new Promise(ok=>{const im=new Image();im.onload=()=>{const k=Math.min(1,1600/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.85))};im.onerror=()=>ok(url);im.src=url})}
+const CB_SYS='Bạn đọc SAO KÊ HOÀN TIỀN hoặc SAO KÊ ĐIỂM THƯỞNG thẻ tín dụng Việt Nam. Chỉ trả về JSON, không giải thích: {"ngan_hang":"tên ngân hàng/thẻ","so_the_cuoi":"4 số cuối nếu có","tu":"YYYY-MM-DD","den":"YYYY-MM-DD (ngày cuối kỳ hoặc ngày sao kê)","loai":"tien|diem","tong":số tiền hoàn thực nhận trong kỳ (với điểm: điểm được cộng trong kỳ trừ điểm bị trừ do hoàn trả/huỷ giao dịch; KHÔNG trừ điểm đã đổi quà/đổi tiền),"quy_doi":số đồng cho 1 điểm nếu sao kê ghi (không ghi thì null),"nhom":[{"ten":"tên nhóm/chương trình","chi_tieu":số,"hoan":số}],"ghi_chu":"ngắn"}';
+async function cbImport(inp){
+  const files=[...(inp.files||[])].slice(0,6);inp.value='';if(!files.length)return;
+  const parts=[];let th='';
+  try{for(const f of files){if(f.type==='application/pdf'||/\.pdf$/i.test(f.name)){if(f.size>9e6)throw new Error('PDF quá lớn (tối đa khoảng 9MB).');parts.push({type:'document',source:{type:'base64',media_type:'application/pdf',data:(await fileB64(f)).split(',')[1]}});th+='<div style="padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.18);font-size:15px;font-weight:600">PDF · '+esc(f.name)+'</div>'}
+    else{const u=await shrinkImg(f);parts.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:u.split(',')[1]}});th+='<img src="'+u+'" alt="" style="display:block;max-width:150px;max-height:220px;border-radius:10px">'}}}
+  catch(e){chatSay(esc(e.message));return}
+  chatSay('Đang đọc sao kê hoàn tiền…',th);
+  parts.push({type:'text',text:'Đọc sao kê hoàn tiền / điểm thưởng này.'});
+  let j=null;try{const s=await window.mnAI([{role:'user',content:parts}],CB_SYS,1500);const m=/\{[\s\S]*\}/.exec(String(s||''));j=m?JSON.parse(m[0]):null}catch(e){chatSay('Không đọc được: '+esc(e.message));return}
+  if(!j||!(+j.tong>=0)||!/^\d{4}-\d{2}-\d{2}$/.test(j.den||'')){chatSay('Không nhận ra số hoàn và kỳ sao kê trong tệp này.');return}
+  const tong=Math.round((+j.tong||0)*(j.loai==='diem'&&+j.quy_doi>0?+j.quy_doi:1));
+  const key=fold(j.ngan_hang||'');const cs=cbCards();let a=cs.find(x=>{const n=fold(sn(x));return n&&key.includes(n)})||null;
+  if(!a&&/vpbank|step ?up/.test(key))a=cs.find(x=>/\bvp\b/.test(fold(x.name)));
+  const i=CB_IMPORTS.push({j,tong})-1;
+  const per=a?cbPeriod(a,j.den):null;const ex=a?(a.cbHist||[]).find(h=>h.id===per.s):null;
+  chatSay('<b>'+esc(j.ngan_hang||'Thẻ')+'</b>'+(j.so_the_cuoi?' …'+esc(j.so_the_cuoi):'')+' · kỳ '+esc((j.tu||'?').split('-').reverse().join('/'))+' – '+esc(j.den.split('-').reverse().join('/'))
+    +'<br>'+(j.loai==='diem'?'Điểm thưởng '+fmtNum(j.tong)+(+j.quy_doi>0?' × '+j.quy_doi+'đ':' (tính 1 điểm = 1đ)')+' = ':'Hoàn thực nhận ')+'<b>'+K(tong)+'</b>'
+    +((j.nhom||[]).length?'<br><span class="qa-why">'+j.nhom.map(g=>esc(g.ten)+': '+K(g.hoan)).join(' · ')+'</span>':'')
+    +'<br>Ghi vào thẻ: <select id="mncb-imp-'+i+'" class="qa-pick" style="min-height:36px;font:inherit">'+cs.map(x=>'<option value="'+x.id+'"'+(a&&x.id===a.id?' selected':'')+'>'+esc(sn(x))+'</option>').join('')+'</select>'
+    +(ex?'<br><span class="qa-why">Kỳ này đã có số '+K(ex.actual)+' — lưu sẽ thay bằng số mới.</span>':'')
+    +'<br><button type="button" class="qa-chip" style="min-height:40px;margin-top:6px;background:var(--navy);color:#fff;border-color:transparent" onclick="mncbSaveImport('+i+')">Lưu số hoàn</button>');
+}
+function fmtNum(n){return new Intl.NumberFormat('vi-VN').format(+n||0)}
+window.mncbSaveImport=function(i){const it=CB_IMPORTS[i];const sel=gid('mncb-imp-'+i);if(!it||!sel)return;const a=cbCards().find(x=>x.id===sel.value);if(!a)return;
+  const per=cbPeriod(a,it.j.den);a.cbHist=Array.isArray(a.cbHist)?a.cbHist:[];const k=a.cbHist.findIndex(h=>h.id===per.s);
+  const rec={id:per.s,s:per.s,e:per.e,actual:it.tong,note:'Từ sao kê '+(it.j.loai==='diem'?'điểm thưởng':'hoàn tiền')+(it.j.ghi_chu?': '+String(it.j.ghi_chu).slice(0,120):''),at:iso(new Date())};
+  if(k>=0)a.cbHist[k]=rec;else a.cbHist.push(rec);persist();sel.disabled=true;chatSay('Đã lưu <b>'+K(it.tong)+'</b> vào '+esc(sn(a))+', kỳ '+dm(per.s)+' – '+dm(per.e)+'. <a href="#" onclick="mncbOpen(\'cb\');try{closeQaChat()}catch(e){};return false">Xem Hoàn tiền</a>')};
 
 /* ── Ô "Hoàn tiền dự kiến" ở Tổng quan ── */
 function kpiTile(){

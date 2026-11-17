@@ -99,6 +99,6 @@ function ftDecide(data,cloudDb){const cs=data._seq||0;if(data._deviceId&&data._d
   if(cs>pushed)return['merge',ftGetBase(false)];
   if(ftH(cloudDb)===ftH(ftFull()))return['ignore'];
   return['merge',ftGetBase(cs===pushed)||ftGetBase(false)]}
-const FT_OWN={accounts:['instFeeMonthly','stmtOverride','stmtOverrideKey','cashback','cbHist'],installments:['startStmt','feeMode','fee','rateMode','rate'],debts:['feeMode','fee','rateMode','rate']};
+const FT_OWN={accounts:['instFeeMonthly','stmtOverride','stmtOverrideKey','cashback','cbHist','cbOpen','cbWd'],installments:['startStmt','feeMode','fee','rateMode','rate'],debts:['feeMode','fee','rateMode','rate']};
 function ftProtect(cloudDb){let n=0;for(const k in FT_OWN){const loc=new Map((db[k]||[]).map(x=>[String(x.id),x]));(cloudDb[k]||[]).forEach(c=>{const l=loc.get(String(c.id));if(!l)return;FT_OWN[k].forEach(f=>{if(f in l&&JSON.stringify(c[f])!==JSON.stringify(l[f])){c[f]=l[f];n++}})})}
   for(const k in db){if(k[0]==='_'&&!(k in cloudDb)){cloudDb[k]=db[k];n++}}return n}
