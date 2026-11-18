@@ -38,7 +38,6 @@ function cardStmtClosed(card){
 }
 function stmtSplit(a){const s=cardStmtClosed(a);const pay=s.stmt||0;let spend=s.spend||0,inst=s.instOnly!=null?s.instOnly:(s.inst||0),fee=s.fee||0;const raw=spend+inst+fee;if(raw>pay&&raw>0){const k=pay/raw;spend=Math.round(spend*k);inst=Math.round(inst*k);fee=Math.max(0,pay-spend-inst)}let other=Math.max(0,pay-spend-inst-fee);if(other<50000){spend+=other;other=0}return {pay,spend,inst,fee,other,s}}
 function stmtParts(x){return [['Chi tiêu đã chốt',x.spend],['Trả góp',x.inst],['Lãi & phí trả góp',x.fee],['Khác · chưa khớp giao dịch',x.other]].filter(r=>r[1]>0)}
-/* ── CASHBACK: tính hoàn tiền nằm ở moneynote-cashback.js (cbPol, cbPeriod, cbCalc, cbSuggest, cbHistory) ── */
 function stmtSplitTxt(x,fm){fm=fm||fmtK;return stmtParts(x).map(r=>r[0]+' '+fm(r[1])).join(' · ')}
 function cardTotDebt(a){return cardDebtInfo(a).total}
 function instMo(s){s=String(s||'');return +s.slice(0,4)*12+(+s.slice(5,7)-1)}
@@ -99,6 +98,6 @@ function ftDecide(data,cloudDb){const cs=data._seq||0;if(data._deviceId&&data._d
   if(cs>pushed)return['merge',ftGetBase(false)];
   if(ftH(cloudDb)===ftH(ftFull()))return['ignore'];
   return['merge',ftGetBase(cs===pushed)||ftGetBase(false)]}
-const FT_OWN={accounts:['instFeeMonthly','stmtOverride','stmtOverrideKey','cashback','cbHist','cbOpen','cbWd'],installments:['startStmt','feeMode','fee','rateMode','rate'],debts:['feeMode','fee','rateMode','rate']};
+const FT_OWN={accounts:['instFeeMonthly','stmtOverride','stmtOverrideKey'],installments:['startStmt','feeMode','fee','rateMode','rate'],debts:['feeMode','fee','rateMode','rate']};
 function ftProtect(cloudDb){let n=0;for(const k in FT_OWN){const loc=new Map((db[k]||[]).map(x=>[String(x.id),x]));(cloudDb[k]||[]).forEach(c=>{const l=loc.get(String(c.id));if(!l)return;FT_OWN[k].forEach(f=>{if(f in l&&JSON.stringify(c[f])!==JSON.stringify(l[f])){c[f]=l[f];n++}})})}
   for(const k in db){if(k[0]==='_'&&!(k in cloudDb)){cloudDb[k]=db[k];n++}}return n}

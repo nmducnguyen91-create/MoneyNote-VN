@@ -2419,7 +2419,7 @@ html body.dark [style*="color:var(--navy)"]{color:#a8c8ec!important}
     </div>
   </div>
 </div>
-<script src="moneynote-core.js?v=45"></script>
+<script src="moneynote-core.js?v=43"></script>
 <script>
 function escH(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 // ── CỜ BẬT/TẮT TÍNH NĂNG ──
@@ -5084,7 +5084,7 @@ function ensureAccounts(){if(!db.accounts||!db.accounts.length)db.accounts=[{id:
 function acctById(id){ensureAccounts();return db.accounts.find(a=>a.id===id)}
 function mainAcctId(){ensureAccounts();const m=db.accounts.find(a=>a.main&&a.type!=='credit');return(m||db.accounts[0]).id}
 function renderAcctChips(){ensureAccounts();const el=document.getElementById('f-acct');if(!el)return;if(!selAcct||!acctById(selAcct))selAcct=mainAcctId();
-  el.innerHTML=db.accounts.map(a=>`<option value="${a.id}"${a.id===selAcct?' selected':''}>${a.name}</option>`).join('')}
+  el.innerHTML=db.accounts.map(a=>`<option value="${a.id}"${a.id===selAcct?' selected':''}>${a.name}${a.type==='credit'?' (thẻ TD)':''}</option>`).join('')}
 function setAcct(id){selAcct=id;try{localStorage.setItem('lastAcct',id)}catch(e){}}
 function populateXferSelects(){ensureAccounts();const f=document.getElementById('f-from'),t=document.getElementById('f-to');if(!f||!t)return;const opts=db.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');const pf=f.value,pt=t.value;f.innerHTML=opts;t.innerHTML=opts;f.value=(pf&&acctById(pf))?pf:((selAcct&&acctById(selAcct))?selAcct:mainAcctId());const other=db.accounts.find(a=>a.id!==f.value);t.value=(pt&&pt!==f.value&&acctById(pt))?pt:(other?other.id:f.value)}
 // Ngày chốt sao kê thực tế của tháng (y,m): ngày 29–31 tự lùi về ngày cuối tháng ngắn
@@ -8333,7 +8333,36 @@ window.mnuReport=()=>report().txt;
  const f=window.ftNavSub;if(typeof f==='function'&&!f.__mg){const w=function(s){const r=f.apply(this,arguments);if(s==='account'){try{renderAcctList();renderInstList()}catch(e){}}return r};w.__mg=1;w.__mnu=f.__mnu;window.ftNavSub=w}
  try{renderAcctList();renderInstList()}catch(e){}}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();setTimeout(go,500)})();</script>
-<script src="moneynote-cashback.js?v=19"></script>
+<script>/* Gỡ dữ liệu hoàn tiền thẻ (tính năng đã bỏ 18/11/2026): xoá các trường hoàn tiền trên thẻ và giao dịch, chạy đến khi sạch */(function(){const AF=['cashback','cbHist','cbOpen','cbWd','_cbSeedVP','_cbSeedVP2','_cbSeedVPopen','_cbSeedVIB','_cbSeedVIBpol','_cbSeedVIBopen'];let n=0;
+function run(){n++;if(typeof db==='undefined'||!db||!Array.isArray(db.accounts)||!db.accounts.length){if(n<40)setTimeout(run,1500);return}let ch=0;
+ db.accounts.forEach(a=>{if(!a)return;AF.forEach(k=>{if(k in a){delete a[k];ch++}})});
+ (db.transactions||[]).forEach(t=>{if(!t)return;if('online' in t){delete t.online;ch++}if('cbWd' in t){delete t.cbWd;ch++}});
+ try{['mnAcctSub','mncbPrefs'].forEach(k=>localStorage.removeItem(k))}catch(e){}
+ if(ch){try{save()}catch(e){}}if(n<40)setTimeout(run,15000)}
+setTimeout(run,2500)})();</script>
+<script>/* Chat: nút "+" đính kèm ảnh/PDF → tệp hiện trên ô nhập → gõ yêu cầu rồi gửi (bộ đọc chứng từ qaImg nhận kèm yêu cầu qua window.__qaNote) */(function(){const ATT=[];const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function icon(){const b=$('qa-cam');if(!b||b.dataset.plus)return;b.dataset.plus=1;b.setAttribute('aria-label','Đính kèm ảnh hoặc PDF');b.setAttribute('onclick','mnAttPick(event)');
+ b.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+ if(!$('mn-att')){const f=document.createElement('input');f.type='file';f.id='mn-att';f.accept='image/*,application/pdf';f.multiple=true;f.style.display='none';f.onchange=()=>{[...(f.files||[])].forEach(x=>{if(ATT.length<6)ATT.push(x)});f.value='';bar()};b.after(f)}}
+window.mnAttPick=function(e){if(e)e.stopPropagation();const f=$('mn-att');if(f)f.click()};
+function bar(){const inp=$('qa-input');if(!inp)return;const row=inp.parentElement;let el=$('mn-attbar');const sb=$('qa-send');
+ if(sb)sb.classList.toggle('dim',!ATT.length&&!inp.value.trim());
+ if(!inp.dataset.ph0)inp.dataset.ph0=inp.placeholder;inp.placeholder=ATT.length?'Yêu cầu cho tệp đính kèm…':inp.dataset.ph0;
+ if(!ATT.length){if(el)el.remove();return}
+ if(!el){el=document.createElement('div');el.id='mn-attbar';el.style.cssText='display:flex;gap:6px;flex-wrap:wrap;padding:6px 0 8px;width:100%';row.parentElement.insertBefore(el,row)}
+ el.innerHTML=ATT.map((f,i)=>{const pdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name);return '<span style="position:relative;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bdr);border-radius:10px;background:var(--light);padding:'+(pdf?'6px 30px 6px 10px':'3px 30px 3px 3px')+';max-width:180px;font-size:13px">'+(pdf?'<b>PDF</b><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.name)+'</span>':'<img src="'+URL.createObjectURL(f)+'" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:7px">')
+  +'<button type="button" aria-label="Bỏ tệp '+esc(f.name)+'" data-attdel="'+i+'" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:none;border-radius:13px;background:rgba(0,0,0,.08);cursor:pointer;color:var(--text)">✕</button></span>'}).join('');
+ el.querySelectorAll('[data-attdel]').forEach(x=>x.onclick=()=>{ATT.splice(+x.dataset.attdel,1);bar()});try{inp.focus()}catch(e){}}
+function hook(){if(typeof window.qaSend!=='function'||typeof window.openQaChat!=='function')return setTimeout(hook,400);
+ if(!window.qaSend.__att){const o=window.qaSend;const w=function(){const inp=$('qa-input');if(!ATT.length)return o.apply(this,arguments);
+   const t=inp?inp.value.trim():'';if(inp){inp.value='';inp.style.height='auto'}const files=ATT.splice(0);bar();
+   if(t){const lg=$('qa-log');if(lg){lg.insertAdjacentHTML('beforeend','<div class="qa-me">'+esc(t)+'</div>');lg.scrollTop=lg.scrollHeight}}
+   const fi=$('qa-file');if(!fi||typeof window.qaImg!=='function')return;try{const dt=new DataTransfer();files.forEach(f=>dt.items.add(f));fi.files=dt.files}catch(e){return}
+   window.__qaNote=t;window.qaImg(fi)};w.__att=1;window.qaSend=w}
+ if(!window.openQaChat.__att){const oq=window.openQaChat;const wq=function(){const r=oq.apply(this,arguments);setTimeout(icon,0);return r};wq.__att=1;window.openQaChat=wq}
+ icon()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(hook,0));else setTimeout(hook,0)})();</script>
 <script>/* Tự kiểm tra bản mới khi mở/quay lại app (app màn hình chính iOS không tự tải lại) */(function(){if(!('serviceWorker' in navigator))return;let busy=0,last=0,rl=0;
 navigator.serviceWorker.addEventListener('controllerchange',()=>{if(rl)return;rl=1;location.reload()});
 async function chk(){const now=Date.now();if(busy||now-last<20000||!navigator.onLine)return;busy=1;last=now;try{const base=location.pathname.replace(/[^/]*$/,'');const t=await (await fetch(base+'sw.js?t='+now,{cache:'no-store'})).text();const m=t.match(/CACHE\s*=\s*'([^']+)'/);if(!m)return;if(await caches.has(m[1]))return;const r=await navigator.serviceWorker.getRegistration();if(r)await r.update()}catch(e){}finally{busy=0}}
