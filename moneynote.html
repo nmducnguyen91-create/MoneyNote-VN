@@ -8733,6 +8733,23 @@ window.mnuReport=()=>report().txt;
  const f=window.ftNavSub;if(typeof f==='function'&&!f.__mg){const w=function(s){const r=f.apply(this,arguments);if(s==='account'){try{renderAcctList();renderInstList()}catch(e){}}return r};w.__mg=1;w.__mnu=f.__mnu;window.ftNavSub=w}
  try{renderAcctList();renderInstList()}catch(e){}}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();setTimeout(go,500)})();</script>
+<script>/* Đối chiếu sao kê thẻ MB kỳ 11/10–10/11/2026 (18/11/2026): Phương Nam 675.000/kỳ + phí 97.200/kỳ, Pru 3 kỳ bắt đầu SK 09/2026, Pru 6 kỳ phí chuyển đổi 347.458 */(function(){let n=0;
+function run(){n++;if(typeof db==='undefined'||!db||!Array.isArray(db.installments)||!db.installments.length){if(n<40)setTimeout(run,1500);return}
+ if(db._mbFix1118){return}let ch=0;const L=db.installments.filter(i=>i&&i.card==='ac_mab');
+ const set=(o,k,v)=>{if(o[k]!==v){o[k]=v;ch++}};
+ const pn=L.find(i=>/ph[uư][oơ]ng\s*nam/i.test(i.name||'')&&+i.term===12);
+ if(pn){set(pn,'per',675000);set(pn,'total',8100000);set(pn,'startStmt','2026-02');set(pn,'feeMode','split');set(pn,'fee',1166400);delete pn.settled}
+ const p3=L.find(i=>/pru/i.test(i.name||'')&&+i.term===3);
+ if(p3){set(p3,'per',2681000);set(p3,'total',8043000);set(p3,'startStmt','2026-09');delete p3.settled}
+ const p6=L.find(i=>/pru/i.test(i.name||'')&&+i.term===6);
+ if(p6){set(p6,'per',1340500);set(p6,'total',8043000);set(p6,'startStmt','2026-11');set(p6,'feeMode','once');set(p6,'fee',347458)}
+ const a=(db.accounts||[]).find(x=>x&&x.id==='ac_mab');
+ if(a){if(a.instFeeMonthly){a.instFeeMonthly=0;ch++}if(a.stmtOverride!=null){delete a.stmtOverride;delete a.stmtOverrideKey;ch++}}
+ L.forEach(i=>{try{instSync(i)}catch(e){}});
+ if(pn&&p3&&p6){db._mbFix1118=1;ch++}
+ if(ch){try{save()}catch(e){}try{typeof renderAll==='function'&&renderAll()}catch(e){}}
+ if(!db._mbFix1118&&n<40)setTimeout(run,15000)}
+setTimeout(run,3000)})();</script>
 <script>/* Gỡ dữ liệu hoàn tiền thẻ (tính năng đã bỏ 18/11/2026): xoá các trường hoàn tiền trên thẻ và giao dịch, chạy đến khi sạch */(function(){const AF=['cashback','cbHist','cbOpen','cbWd','_cbSeedVP','_cbSeedVP2','_cbSeedVPopen','_cbSeedVIB','_cbSeedVIBpol','_cbSeedVIBopen'];let n=0;
 function run(){n++;if(typeof db==='undefined'||!db||!Array.isArray(db.accounts)||!db.accounts.length){if(n<40)setTimeout(run,1500);return}let ch=0;
  db.accounts.forEach(a=>{if(!a)return;AF.forEach(k=>{if(k in a){delete a[k];ch++}})});
