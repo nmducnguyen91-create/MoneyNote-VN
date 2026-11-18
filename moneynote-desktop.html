@@ -8350,6 +8350,23 @@ function run(){n++;if(typeof db==='undefined'||!db||!Array.isArray(db.installmen
  if(ch){try{save()}catch(e){}try{typeof renderAll==='function'&&renderAll()}catch(e){}}
  if(!db._mbFix1118&&n<40)setTimeout(run,15000)}
 setTimeout(run,3000)})();</script>
+<script>/* Đối chiếu trả góp thẻ Lion theo app Lion (18/11/2026): 3.660.000 ×10 đang kỳ 8; 2 khoản 1.910.000 ×24 và 636.667 ×24 đang kỳ 6 — kỳ thanh toán 30/11 */(function(){let n=0;
+function run(){n++;if(typeof db==='undefined'||!db||!Array.isArray(db.installments)||!db.installments.length){if(n<40)setTimeout(run,1500);return}
+ if(db._lionFix1118)return;let ch=0;const L=db.installments.filter(i=>i&&i.card==='ac_lion');
+ const set=(o,k,v)=>{if(o[k]!==v){o[k]=v;ch++}};
+ const a10=L.find(i=>+i.term===10&&+i.per===3660000);
+ const b=L.filter(i=>+i.term===24&&+i.per===1910000);
+ const c=L.find(i=>+i.term===24&&Math.abs((+i.per||0)-636667)<1000);
+ if(a10){set(a10,'total',36600000);set(a10,'startStmt','2026-04');delete a10.settled}
+ b.forEach(i=>{set(i,'total',45840000);set(i,'startStmt','2026-06');delete i.settled});
+ if(c){set(c,'per',636667);set(c,'total',15280008);set(c,'startStmt','2026-06');delete c.settled}
+ const a=(db.accounts||[]).find(x=>x&&x.id==='ac_lion');
+ if(a&&a.stmtOverride!=null){delete a.stmtOverride;delete a.stmtOverrideKey;ch++}
+ L.forEach(i=>{try{instSync(i)}catch(e){}});
+ if(a10&&b.length===2&&c){db._lionFix1118=1;ch++}
+ if(ch){try{save()}catch(e){}try{typeof renderAll==='function'&&renderAll()}catch(e){}}
+ if(!db._lionFix1118&&n<40)setTimeout(run,15000)}
+setTimeout(run,3200)})();</script>
 <script>/* Gỡ dữ liệu hoàn tiền thẻ (tính năng đã bỏ 18/11/2026): xoá các trường hoàn tiền trên thẻ và giao dịch, chạy đến khi sạch */(function(){const AF=['cashback','cbHist','cbOpen','cbWd','_cbSeedVP','_cbSeedVP2','_cbSeedVPopen','_cbSeedVIB','_cbSeedVIBpol','_cbSeedVIBopen'];let n=0;
 function run(){n++;if(typeof db==='undefined'||!db||!Array.isArray(db.accounts)||!db.accounts.length){if(n<40)setTimeout(run,1500);return}let ch=0;
  db.accounts.forEach(a=>{if(!a)return;AF.forEach(k=>{if(k in a){delete a[k];ch++}})});
